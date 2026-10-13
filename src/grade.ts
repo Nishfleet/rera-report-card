@@ -122,6 +122,7 @@ function newestFirst(a: Filing, b: Filing): number {
 interface Ctx {
   asOf: string;
   filings: Filing[]; // usable filings, sorted oldest first
+  unread: Map<InputName, string>;
 }
 
 function ofType(ctx: Ctx, type: string): Filing[] {
@@ -184,6 +185,8 @@ const HANDLERS: Record<string, Handler> = {
     return (last.payload.percent as number) <= (previous.payload.percent as number) ? [last] : [];
   },
   registration_lapsed: (_rule, ctx) => {
+    // Without a readable extensions input, "no extension on file" is unknown.
+    if (ctx.unread.has("extensions")) return [];
     const latest = ofType(ctx, "registration").sort(newestFirst)[0];
     const lapsed =
       latest.payload.status !== "revoked" &&
@@ -229,14 +232,14 @@ export function grade(rules: RuleTable, filings: Filing[], asOf: Date): Grade {
   for (const f of known) {
     if (f.type === "unreadable") {
       unreadReason.set(f.payload.input as InputName, f.payload.reason as string);
-    } else if (f.type in INPUT_OF_TYPE && !hasSource(f.sourceUrl)) {
+    } else if (Object.hasOwn(INPUT_OF_TYPE, f.type) && !hasSource(f.sourceUrl)) {
       unreadReason.set(INPUT_OF_TYPE[f.type], `filing ${f.id} has no source URL`);
     } else {
       usable.push(f);
     }
   }
   usable.sort(byDateThenId);
-  const ctx: Ctx = { asOf: asOfIso, filings: usable };
+  const ctx: Ctx = { asOf: asOfIso, filings: usable, unread: unreadReason };
 
   for (const input of INPUTS) {
     if (unreadReason.has(input)) continue;

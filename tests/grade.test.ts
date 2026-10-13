@@ -196,6 +196,18 @@ describe("rules", () => {
     expect(ids([...rest, reg("active", "2026-01-01"), f("e", "extension", "2025-12-01")])).toEqual(["R8"]);
   });
 
+  it("R14 is skipped when the extensions input is unread", () => {
+    const rest = base().filter((x) => x.id !== "reg");
+    const noSource = { ...f("e", "extension", "2026-01-01"), sourceUrl: "" };
+    const g = grade(v1, [...rest, reg("active", "2026-01-01"), noSource], ASOF);
+    expect(g.reasons).toEqual([]);
+    expect(g.unread).toEqual([{ input: "extensions", reason: "filing e has no source URL" }]);
+  });
+
+  it("does not treat an inherited property name as a filing type", () => {
+    expect(ids([...base(), f("k", "constructor", "2026-01-01")])).toEqual([]);
+  });
+
   it("never goes below 0 and applies the stricter of two ceilings", () => {
     const rest = base().filter((x) => x.id !== "reg");
     const heavy = [reg("revoked", "2026-01-01"), ...Array.from({ length: 9 }, (_, i) => f(`c${i}`, "complaint", "2026-01-01"))];
