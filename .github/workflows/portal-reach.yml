@@ -1,0 +1,34 @@
+name: Portal reach probe
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Probe portals
+        run: |
+          curl -s https://ipinfo.io/json || true
+          echo
+          {
+            echo '### Portal reach probe'
+            echo
+            echo '| Status | Time | URL |'
+            echo '|---|---|---|'
+          } >> "$GITHUB_STEP_SUMMARY"
+          for url in \
+            https://maharera.maharashtra.gov.in/ \
+            https://maharera.maharashtra.gov.in/projects-search-result \
+            https://haryanarera.gov.in/ \
+            https://rera.delhi.gov.in/ \
+            https://up-rera.in/projects \
+            https://rera.mohua.gov.in/ ; do
+            line=$(curl -sS -o /dev/null -w '%{http_code} %{time_total}s %{url_effective}\n' -L --max-time 20 -A 'Mozilla/5.0' "$url" 2>&1 || true)
+            echo "$line"
+            echo "$line" | awk '{printf "| %s | %s | %s |\n", $1, $2, $3}' >> "$GITHUB_STEP_SUMMARY"
+          done
