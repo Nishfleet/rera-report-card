@@ -16,8 +16,13 @@ const LIST_HEADERS = [
 
 const unreadable = (reason: string): Unreadable => ({ ok: false, unreadable: true, reason });
 
-function checkPage(html: string): Unreadable | null {
-  if (/captcha/i.test(html)) return unreadable("captcha: page asks for a CAPTCHA");
+// A CAPTCHA in visible text, an element id, name, class or alt text. Script and style bodies do not count.
+function checkPage($: cheerio.CheerioAPI): Unreadable | null {
+  $("script, style").remove();
+  const marked = $("[id], [name], [class], [alt], [src]").filter((_, el) =>
+    ["id", "name", "class", "alt", "src"].some((a) => /captcha/i.test($(el).attr(a) ?? "")),
+  );
+  if (marked.length > 0 || /captcha/i.test($.root().text())) return unreadable("captcha: page asks for a CAPTCHA");
   return null;
 }
 
@@ -44,7 +49,7 @@ function dateUtc(y: number, m: number, d: number): number | null {
   return ms / 1000;
 }
 
-// The date after the word DATED is the registration date. Text before it is the certificate number.
+// The text after the word DATED holds the registration date. The whole text, date included, is kept as the certificate.
 function certificate(text: string): { number: string; date: number | null; lapsed: boolean } {
   const lapsed = /Lapsed Project/i.test(text);
   const base = clean(text.replace(/Lapsed Project/i, ""));
@@ -67,9 +72,9 @@ export interface ListPage {
 }
 
 export function parseList(html: string, pageUrl: string): ParseResult<ListPage> {
-  const blocked = checkPage(html);
-  if (blocked) return blocked;
   const $ = cheerio.load(html);
+  const blocked = checkPage($);
+  if (blocked) return blocked;
   const table = $("table#compliant_hearing");
   if (table.length !== 1) return unreadable("layout: no single table#compliant_hearing");
   const heads = table
@@ -97,7 +102,8 @@ export function parseList(html: string, pageUrl: string): ParseResult<ListPage> 
       skipped.push({ serial, reason: `no readable project id: "${regno}"` });
       return;
     }
-    const href = cell("Project ID").find("a").attr("href");
+    const rawHref = cell("Project ID").find("a").attr("href");
+    const href = rawHref ? new URL(rawHref, pageUrl).href : null;
     const detail = href ? /\/searchprojectDetail\/(\d+)$/.exec(href) : null;
     if (!href || !detail) {
       skipped.push({ serial, reason: `${regno}: no detail link` });
@@ -129,7 +135,7 @@ export function parseList(html: string, pageUrl: string): ParseResult<ListPage> 
     };
     rows.push({ regno, detailId: detail[1], detailUrl: href, record: { project, filings: [filing] } });
   });
-  if (rows.length === 0 && skipped.length === 0) return unreadable(`layout: no rows in ${pageUrl}`);
+  if (rows.length === 0) return unreadable(`layout: no readable rows in ${pageUrl} (${skipped.length} skipped)`);
   return { ok: true, value: { rows, skipped } };
 }
 
@@ -154,9 +160,9 @@ function rowBy($: cheerio.CheerioAPI, wanted: string[]): Record<string, string> 
 }
 
 export function parseDetail(html: string, pageUrl: string): ParseResult<ProjectRecord> {
-  const blocked = checkPage(html);
-  if (blocked) return blocked;
   const $ = cheerio.load(html);
+  const blocked = checkPage($);
+  if (blocked) return blocked;
   if (!/Comprehensive Project Details/.test($("body").text())) {
     return unreadable("layout: no 'Comprehensive Project Details' heading");
   }

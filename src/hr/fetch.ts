@@ -9,7 +9,10 @@ export const LIST_URLS = {
   gurugram: `${BASE}/admincontrol/registered_projects/2`,
 } as const;
 
-export const detailUrl = (detailId: string): string => `${BASE}/view_project/searchprojectDetail/${detailId}`;
+export function detailUrl(detailId: string): string {
+  if (!/^\d+$/.test(detailId)) throw new Error(`bad detail id: ${detailId}`);
+  return `${BASE}/view_project/searchprojectDetail/${detailId}`;
+}
 
 // Returns the raw page and never parses it. A non-200 status throws so a failed fetch is loud.
 export async function fetchPage(url: string, timeoutMs = 60_000): Promise<RawBundle> {
@@ -17,7 +20,7 @@ export async function fetchPage(url: string, timeoutMs = 60_000): Promise<RawBun
     headers: { "user-agent": USER_AGENT },
     signal: AbortSignal.timeout(timeoutMs),
   });
-  const html = await res.text();
   if (res.status !== 200) throw new Error(`fetch ${url}: HTTP ${res.status}`);
-  return { url, status: res.status, html, fetchedAt: Math.floor(Date.now() / 1000) };
+  const html = await res.text();
+  return { url: res.url || url, status: res.status, html, fetchedAt: Math.floor(Date.now() / 1000) };
 }

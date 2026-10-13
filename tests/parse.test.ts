@@ -22,16 +22,17 @@ describe("fixtures", () => {
 });
 
 describe("parseList", () => {
-  for (const [file, metaFile, count, prefix] of [
-    ["gurugram-list.html.gz", "gurugram-list.meta.json", 1082, /^RERA-GRG-/],
-    ["panchkula-list.html.gz", "panchkula-list.meta.json", 1109, /^RERA-PKL-/],
+  for (const [file, metaFile, count, skippedCount, prefix] of [
+    ["gurugram-list.html.gz", "gurugram-list.meta.json", 1082, 37, /^RERA-GRG-/],
+    ["panchkula-list.html.gz", "panchkula-list.meta.json", 1109, 15, /^RERA-PKL-/],
   ] as const) {
     it(`reads every row of ${file}`, () => {
       const res = parseList(text(file), meta(metaFile).url);
       if (!res.ok) throw new Error(res.reason);
       const { rows, skipped } = res.value;
       expect(rows.length + skipped.length).toBe(count);
-      expect(rows.length).toBeGreaterThan(count - 60);
+      expect(skipped.length).toBe(skippedCount);
+      expect(skipped.every((s) => /^no readable project id: "NA"$/.test(s.reason))).toBe(true);
       expect(rows.every((r) => prefix.test(r.regno))).toBe(true);
       expect(new Set(rows.map((r) => r.regno)).size).toBe(rows.length);
       expect(skipped.every((s) => s.reason.length > 0)).toBe(true);
@@ -78,6 +79,11 @@ describe("parseList", () => {
     const res = parseList("<html><body><img alt='captcha'><input name='captcha'></body></html>", "u");
     expect(res).toMatchObject({ ok: false, unreadable: true });
     if (!res.ok) expect(res.reason).toMatch(/^captcha/);
+  });
+
+  it("reads a page that only mentions captcha inside a script", () => {
+    const html = text("gurugram-list.html.gz").replace("</head>", "<script>var captcha = 1;</script></head>");
+    expect(parseList(html, "https://haryanarera.gov.in/x")).toMatchObject({ ok: true });
   });
 
   it("returns unreadable on an unknown layout", () => {
