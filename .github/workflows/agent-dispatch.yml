@@ -1,0 +1,46 @@
+# Trigger stub. The dispatch logic lives once in Nishfleet/fleet-ops; a
+# workflow only fires on its own repo's events, so the triggers stay here.
+# opus-vet dispatches this file by name with issue=<N>.
+name: agent-dispatch
+on:
+  issues:
+    types: [labeled, closed, reopened]
+  # A park: comment starts a miss review (fleet-ops#9211).
+  issue_comment:
+    types: [created]
+  workflow_dispatch:
+    inputs:
+      issue:
+        description: 'Issue number to dispatch, overrides the sweep and its claim-PR append'
+        required: false
+        type: string
+      task:
+        description: 'miss-review to replay a miss on issue, orchestrate to hand a parked issue to the orchestrator, empty for a normal sweep'
+        required: false
+        type: string
+  pull_request_target:
+    types: [dequeued, auto_merge_disabled, closed]
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+  schedule:
+    - cron: '17 */6 * * *'
+jobs:
+  dispatch:
+    # Pinned to a commit SHA, not the mutable `main` ref: a reusable workflow
+    # called on a mutable ref runs whatever that ref points to when the job
+    # starts, so an upstream push would control what executes here, with this
+    # repository's automatic token and checkout. Bump the SHA deliberately;
+    # Dependabot's github-actions updater keeps it current.
+    uses: Nishfleet/fleet-ops/.github/workflows/agent-dispatch.yml@cbdfbf28550851abccfb7a4568696e22ac50df21 # fleet-ops main, 2026-10-12
+    permissions:
+      issues: write
+      pull-requests: write
+      contents: write
+      actions: read
+      checks: read
+      statuses: read
+    with:
+      issue: ${{ inputs.issue }}
+      agent_mode: ${{ vars.AGENT_MODE }}
+      task: ${{ inputs.task }}
