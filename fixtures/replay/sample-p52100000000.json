@@ -1,0 +1,33 @@
+{
+  "name": "Sample project P52100000000 (invented, PLAN.md 7.4 worked example)",
+  "asOf": "2026-10-13",
+  "filings": [
+    { "id": "reg1", "type": "registration", "date": "2025-01-15", "sourceUrl": "https://example.test/sample/reg1", "payload": { "status": "active", "validUntil": "2027-06-30" } },
+    { "id": "q0", "type": "qpr", "date": "2026-01-20", "sourceUrl": "https://example.test/sample/q0", "payload": { "deadline": "2026-01-31", "filedOn": "2026-01-20", "noticeIssued": false } },
+    { "id": "q1", "type": "qpr", "date": "2026-05-04", "sourceUrl": "https://example.test/sample/q1", "payload": { "deadline": "2026-04-30", "filedOn": null, "noticeIssued": true } },
+    { "id": "cd1", "type": "completion_date", "date": "2026-01-10", "sourceUrl": "https://example.test/sample/cd1", "payload": { "originalDate": "2025-12-31", "currentDate": "2027-06-30" } },
+    { "id": "e1", "type": "extension", "date": "2025-11-05", "sourceUrl": "https://example.test/sample/e1", "payload": {} },
+    { "id": "c1", "type": "complaint", "date": "2026-02-01", "sourceUrl": "https://example.test/sample/c1", "payload": {} },
+    { "id": "c2", "type": "complaint", "date": "2026-03-01", "sourceUrl": "https://example.test/sample/c2", "payload": {} },
+    { "id": "o1", "type": "order", "date": "2026-06-01", "sourceUrl": "https://example.test/sample/o1", "payload": { "against": "project" } },
+    { "id": "p1", "type": "progress", "date": "2026-01-20", "sourceUrl": "https://example.test/sample/p1", "payload": { "percent": 55 } },
+    { "id": "p2", "type": "progress", "date": "2026-07-20", "sourceUrl": "https://example.test/sample/p2", "payload": { "percent": 61 } },
+    { "id": "b1", "type": "bank", "date": "2026-01-20", "sourceUrl": "https://example.test/sample/b1", "payload": {} }
+  ],
+  "stored": {
+    "rulesVersion": "v1",
+    "asOf": "2026-10-13",
+    "letter": "C",
+    "points": 65,
+    "reasons": [
+      { "ruleId": "R1", "points": 8, "impact": "Medium", "title": "Quarterly report not filed", "detail": "A quarterly report was not filed by its deadline.", "filingId": "q1", "filingDate": "2026-05-04", "sourceUrl": "https://example.test/sample/q1" },
+      { "ruleId": "R2", "points": 2, "impact": "Low", "title": "Notice for a missed report", "detail": "A notice was issued for a missed quarterly report.", "filingId": "q1", "filingDate": "2026-05-04", "sourceUrl": "https://example.test/sample/q1" },
+      { "ruleId": "R6", "points": 14, "impact": "High", "title": "Completion date moved", "detail": "The completion date moved 13 to 24 months later than first filed.", "filingId": "cd1", "filingDate": "2026-01-10", "sourceUrl": "https://example.test/sample/cd1" },
+      { "ruleId": "R8", "points": 3, "impact": "Low", "title": "Extension granted", "detail": "An extension of the registration was granted.", "filingId": "e1", "filingDate": "2025-11-05", "sourceUrl": "https://example.test/sample/e1" },
+      { "ruleId": "R9", "points": 2, "impact": "Low", "title": "Complaints filed", "detail": "1 to 2 complaints were filed against the project in the last 24 months.", "filingId": "c2", "filingDate": "2026-03-01", "sourceUrl": "https://example.test/sample/c2" },
+      { "ruleId": "R12", "points": 6, "impact": "Medium", "title": "Order issued", "detail": "An order was issued against the project or its promoter in the last 24 months.", "filingId": "o1", "filingDate": "2026-06-01", "sourceUrl": "https://example.test/sample/o1" }
+    ],
+    "unread": [],
+    "clean": ["registration", "progress"]
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "name": "Lapsed registration, grade capped at D (invented)",
+  "asOf": "2026-10-13",
+  "filings": [
+    { "id": "reg1", "type": "registration", "date": "2021-01-01", "sourceUrl": "https://example.test/sample/lp-reg1", "payload": { "status": "active", "validUntil": "2026-06-30" } },
+    { "id": "q1", "type": "qpr", "date": "2026-07-20", "sourceUrl": "https://example.test/sample/lp-q1", "payload": { "deadline": "2026-07-31", "filedOn": "2026-07-20", "noticeIssued": false } },
+    { "id": "cd1", "type": "completion_date", "date": "2021-01-01", "sourceUrl": "https://example.test/sample/lp-cd1", "payload": { "originalDate": "2026-06-30", "currentDate": "2026-06-30" } },
+    { "id": "p1", "type": "progress", "date": "2026-01-20", "sourceUrl": "https://example.test/sample/lp-p1", "payload": { "percent": 40 } },
+    { "id": "p2", "type": "progress", "date": "2026-07-20", "sourceUrl": "https://example.test/sample/lp-p2", "payload": { "percent": 50 } }
+  ],
+  "stored": {
+    "rulesVersion": "v1",
+    "asOf": "2026-10-13",
+    "letter": "D",
+    "points": 59,
+    "reasons": [
+      { "ruleId": "R14", "points": 25, "impact": "High", "title": "Registration lapsed", "detail": "The registration validity passed with no extension on file.", "filingId": "reg1", "filingDate": "2021-01-01", "sourceUrl": "https://example.test/sample/lp-reg1" }
+    ],
+    "unread": [],
+    "clean": ["qpr", "extensions", "completion_date", "complaints_orders", "progress"]
+  }
+}
