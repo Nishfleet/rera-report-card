@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en-IN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aarohi Greens filing timeline (sample)</title><style>
+:root{
+  --canvas:#f5f4ef;--surface:#ffffff;--ink:#15171c;--ink-2:#565b66;--ink-3:#8b909b;
+  --line:#e4e2da;--line-soft:#eeece6;--chip:#eeede7;
+  --accent:#1d4ed8;--accent-ink:#ffffff;--accent-wash:#e8eefc;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-text-size-adjust:100%}
+body{background:var(--canvas);color:var(--ink);
+  font-family:"Inter","Noto Sans Devanagari","Nirmala UI","Kohinoor Devanagari",system-ui,-apple-system,"Segoe UI",sans-serif;
+  font-size:15px;line-height:22px;-webkit-font-smoothing:antialiased;overflow-wrap:anywhere}
+svg{display:block;flex:none}
+a{color:var(--accent);text-decoration:none}
+.mono{font-family:"JetBrains Mono","DejaVu Sans Mono",ui-monospace,monospace;font-size:13px;line-height:20px;letter-spacing:0}
+.label{font-size:12px;line-height:16px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-2)}
+.small{font-size:13px;line-height:20px;color:var(--ink-2)}
+.top{height:56px;background:var(--surface);border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;padding:0 16px}
+.top .brand{display:flex;align-items:center;gap:10px;font-weight:700;font-size:16px;letter-spacing:-.01em}
+.mark{width:28px;height:28px;border-radius:8px;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:15px}
+.iconbtn{width:44px;height:44px;border-radius:50%;border:0;background:transparent;color:var(--ink);display:flex;align-items:center;justify-content:center}
+.page{width:100%;max-width:1120px;margin:0 auto;padding:12px 16px 112px}
+.sample{display:flex;gap:8px;align-items:flex-start;background:var(--chip);border-radius:12px;padding:10px 12px;font-size:13px;line-height:18px;color:var(--ink-2)}
+.sample b{color:var(--ink)}
+.card{background:var(--surface);border:1px solid var(--line-soft);border-radius:20px;box-shadow:0 1px 2px rgba(21,23,28,.04)}
+h1{font-size:24px;line-height:30px;font-weight:700;letter-spacing:-.02em}
+h2.label{margin:28px 4px 10px}
+.pill{display:inline-flex;align-items:center;gap:6px;border-radius:999px;background:var(--chip);color:var(--ink);font-size:13px;line-height:16px;font-weight:600;padding:6px 12px}
+.pill.accent{background:var(--accent-wash);color:var(--accent)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:48px;border-radius:999px;border:1px solid var(--line);background:var(--surface);color:var(--ink);font:inherit;font-weight:600;font-size:15px;padding:0 20px}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn svg{width:20px;height:20px}
+.dock{position:sticky;bottom:0;z-index:5;display:flex;gap:8px;padding:12px 16px calc(12px + env(safe-area-inset-bottom));background:rgba(245,244,239,.94);border-top:1px solid var(--line)}
+.dock .btn.primary{flex:1}
+.src{font-size:12px;line-height:16px;color:var(--ink-2)}
+.src a{font-weight:600}
+@media (min-width:900px){
+  .page{padding:24px 32px 96px}
+  .dock{position:static;background:none;border:0;padding:0}
+}
+.t2{gap:4px;padding:0 12px 0 4px}
+.t2c{flex:1;min-width:0;padding-left:2px}
+.t2n{font-size:16px;line-height:20px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.t2m{font-size:12px;line-height:16px;color:var(--ink-2)}
+.follow{display:inline-flex;align-items:center;gap:6px;min-height:40px;border-radius:999px;border:1px solid var(--line);background:var(--surface);color:var(--ink);font:inherit;font-weight:600;font-size:14px;padding:0 14px}
+.follow.on{background:var(--accent-wash);border-color:transparent;color:var(--accent)}
+.page{padding-bottom:48px}
+.layout2{margin-top:12px}
+.watch,.mail{padding:16px;margin-top:0}
+.mail{margin-top:10px}
+.wline{display:flex;align-items:center;gap:14px;margin-top:10px}
+.letter2{width:52px;height:52px;border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:700;flex:none}
+.next{display:flex;gap:12px;align-items:flex-start;margin-top:14px;padding-top:14px;border-top:1px solid var(--line-soft);font-size:14px;line-height:20px}
+.ic2{flex:none;width:32px;height:32px;border-radius:50%;background:var(--chip);display:flex;align-items:center;justify-content:center}
+.head2{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin:24px 4px 10px}
+.head2 .asof{text-transform:none;letter-spacing:0;font-weight:500;font-size:12px}
+.tl{list-style:none;padding:8px 16px 8px}
+.grp{padding:14px 0 6px 0}
+.ev{position:relative;display:flex;gap:12px;padding:6px 0 14px}
+.ev::before{content:"";position:absolute;left:13px;top:34px;bottom:-4px;width:2px;background:var(--line)}
+.ev:last-child::before{display:none}
+.mk{flex:none;width:28px;height:28px;border-radius:50%;background:var(--accent-wash);color:var(--accent);display:flex;align-items:center;justify-content:center;position:relative;z-index:1}
+.mk.warn{background:var(--ink);color:#fff}
+.quiet .mk{background:var(--chip);color:var(--ink-2)}
+.eb{min-width:0}
+.when{display:flex;flex-wrap:wrap;gap:4px 8px;align-items:center;font-size:12px;line-height:16px;color:var(--ink-2);font-weight:500}
+.mailed{font-size:11px;line-height:14px;font-weight:600;color:var(--accent);background:var(--accent-wash);border-radius:999px;padding:2px 8px}
+.et{font-size:15px;line-height:21px;font-weight:600;margin-top:2px}
+.ed{font-size:14px;line-height:20px;color:var(--ink-2);margin-top:2px}
+.quiet .et{font-weight:500;color:var(--ink-2)}
+.bad .et{font-weight:700}
+.ev .src{margin-top:6px}
+.trig{list-style:none;padding:6px 16px}
+.trig li{display:flex;gap:10px;align-items:center;padding:11px 0;font-size:14px;line-height:20px;min-height:44px}
+.trig li+li{border-top:1px solid var(--line-soft)}
+.trig svg{color:var(--accent)}
+.stop{text-align:center;margin-top:20px;font-size:14px}
+.stop a{color:var(--ink-2);text-decoration:underline;text-underline-offset:3px}
+.email{margin-top:10px;border:1px solid var(--line);border-radius:14px;padding:14px;background:#fbfbf9}
+.mh{font-size:12px;line-height:18px;color:var(--ink-2)}
+.mh b{display:inline-block;width:40px;color:var(--ink);font-weight:600}
+.ms{font-size:16px;line-height:22px;font-weight:700;margin:10px 0 8px;padding-top:10px;border-top:1px solid var(--line-soft)}
+.mbody{font-size:14px;line-height:21px;margin-top:4px}
+.mcta{display:inline-block;margin-top:12px;background:var(--accent);color:#fff;font-weight:600;font-size:14px;line-height:20px;border-radius:999px;padding:10px 18px}
+.mfoot{margin-top:12px;font-size:12px;line-height:18px}
+@media (min-width:900px){
+  .layout2{display:grid;grid-template-columns:380px minmax(0,1fr);gap:32px;align-items:start}
+  .col-a{position:sticky;top:16px}
+  .col-b .head2:first-child{margin-top:0}
+  .t2{padding:0 32px 0 16px}
+}
+</style></head><body>
+<header class="top t2">
+  <button class="iconbtn" type="button" aria-label="Back to the report card"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button>
+  <div class="t2c"><p class="t2n">Aarohi Greens, Phase 2</p><p class="mono t2m">P52100000000</p></div>
+  <button class="follow on" type="button" aria-pressed="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Following</button>
+</header>
+<main class="page">
+  <p class="sample"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16.5v.01"/></svg><span><b>Sample data.</b> The facts on this design screen are invented. They are not the record of this registration number.</span></p>
+  <div class="layout2">
+  <div class="col-a">
+    <section class="card watch">
+      <p class="label">You follow this project</p>
+      <p class="wline"><span class="letter2">C</span><span><b>Grade C, Mixed record</b><br><span class="small">Last changed 4 May 2026</span></span></p>
+      <p class="next"><span class="ic2"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg></span><span><b>Next expected</b><br><span class="small">Quarterly report for Jul to Sep 2026. We read MahaRERA every night until it appears.</span></span></p>
+      <p class="next"><span class="ic2"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5.5" width="17" height="13" rx="2.5"/><path d="M4 8l8 5.5L20 8"/></svg></span><span><b>Emails go to r***@example.com</b><br><span class="small">One email for each change, never more than one a day.</span></span></p>
+    </section>
+    <section class="card mail" aria-label="Last email we sent you">
+      <p class="label">Last email we sent you</p>
+      <div class="email">
+        <p class="mh"><b>From</b> RERA Report Card</p>
+        <p class="mh"><b>Date</b> 4 May 2026, 09:12 IST</p>
+        <p class="ms">Aarohi Greens, Phase 2: grade is now C, down from B</p>
+        <p class="mbody">MahaRERA listed this project for not filing its Jan to Mar 2026 quarterly report.</p>
+        <p class="mbody small">Source: MahaRERA notice list, 4 May 2026.</p>
+        <p class="mcta">Open the report card</p>
+        <p class="mfoot small">You get this because you follow P52100000000. Unfollow in one click.</p>
+      </div>
+    </section>
+  </div>
+  <div class="col-b">
+    <h2 class="label head2">Filing timeline <span class="asof">newest first</span></h2>
+    <ol class="tl card"><li class="grp"><p class="label">Oct 2026</p></li><li class="ev quiet"><span class="mk dot"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="1.5"/></svg></span><div class="eb"><p class="when">13 Oct 2026, 06:10</p><p class="et">Checked MahaRERA. No new filings.</p><p class="ed">Nothing changed since 9 Jul 2026. Next read tonight.</p></div></li><li class="grp"><p class="label">Jul 2026</p></li><li class="ev "><span class="mk ok"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span><div class="eb"><p class="when">9 Jul 2026<span class="mailed">Emailed to followers</span></p><p class="et">Quarterly report for Apr to Jun 2026 filed</p><p class="ed">Promoter reports 61% complete as at 30 Jun 2026.</p><p class="src">Quarterly progress report, filed 9 Jul 2026 · <a href="#">maharera.maharashtra.gov.in</a></p></div></li><li class="grp"><p class="label">May 2026</p></li><li class="ev bad"><span class="mk warn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 6v7M12 17.5v.01"/></svg></span><div class="eb"><p class="when">4 May 2026<span class="mailed">Emailed to followers</span></p><p class="et">Notice for missed Jan to Mar 2026 quarterly report</p><p class="ed">MahaRERA listed the project among those that did not file. The grade moved from B to C.</p><p class="src">MahaRERA notice list, 4 May 2026 · <a href="#">maharera.maharashtra.gov.in</a></p></div></li><li class="grp"><p class="label">Feb 2026</p></li><li class="ev "><span class="mk doc"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 4H7.5A1.5 1.5 0 006 5.5v13A1.5 1.5 0 007.5 20h9a1.5 1.5 0 001.5-1.5V8l-4-4z"/><path d="M9.5 13h5M9.5 16h3"/></svg></span><div class="eb"><p class="when">18 Feb 2026<span class="mailed">Emailed to followers</span></p><p class="et">Order against the promoter</p><p class="ed">The promoter is directed to refund one allottee with interest. This is the 2nd complaint on record.</p><p class="src">MahaRERA order, 18 Feb 2026 · <a href="#">maharera.maharashtra.gov.in</a></p></div></li><li class="grp"><p class="label">Dec 2025</p></li><li class="ev "><span class="mk cal"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="5.5" width="16" height="14" rx="2.5"/><path d="M4 10h16M9 3.5v4M15 3.5v4"/></svg></span><div class="eb"><p class="when">22 Dec 2025<span class="mailed">Emailed to followers</span></p><p class="et">Completion date changed from 31 Dec 2025 to 30 Jun 2027</p><p class="ed">An extension was recorded after the promoter applied on 14 Nov 2025.</p><p class="src">Revised project page, 22 Dec 2025 · <a href="#">maharera.maharashtra.gov.in</a></p></div></li></ol>
+    <h2 class="label head2">We email you when</h2>
+    <ul class="card trig">
+      <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>A new quarterly report is filed</li>
+      <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>A quarterly report is missed</li>
+      <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>The registration lapses or is revoked</li>
+      <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>An extension is applied for or granted</li>
+      <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>A new complaint or order appears</li>
+      <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>The completion date changes</li>
+    </ul>
+    <p class="stop"><a href="#">Stop following this project</a></p>
+  </div>
+  </div>
+</main></body></html>
