@@ -1,0 +1,19 @@
+# Public site Worker. Not deployed yet: it needs a Cloudflare account, a domain on
+# Cloudflare DNS onboarded to Email Service, and a D1 database (see README).
+name = "rera-report-card"
+main = "src/site/worker.ts"
+compatibility_date = "2026-10-01"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "rera-report-card"
+database_id = "REPLACE_WITH_D1_DATABASE_ID"
+
+[[send_email]]
+name = "EMAIL"
+
+[vars]
+FROM_ADDRESS = "follow@REPLACE_WITH_DOMAIN"
+PUBLIC_ORIGIN = "https://REPLACE_WITH_DOMAIN"
+
+# Secret, set with: npx wrangler secret put SECRET
