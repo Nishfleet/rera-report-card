@@ -6,4 +6,10 @@ Every project has one page. The grade comes from public RERA filings, and every 
 
 The first scope is Maharashtra and the National Capital Region (NCR). Other states may follow once those work well.
 
-Status: early build. The grader (`src/grade.ts`, rules in `rules/`) and the Haryana RERA reader (`src/states/hr/`) are in. Run `npm test`.
+Status: early build. Run `npm test`.
+
+- `src/grade.ts` and `rules/`: the grader and the versioned rule table.
+- `src/states/hr/`: the Haryana RERA fetcher and parsers, tested on `tests/fixtures/hr/`.
+- `src/site/`: the public site as a Cloudflare Worker. Project page `/p/:state/:slug`, preview card, follow by email with double opt-in, one-click unfollow and a manage page. Schema in `db/schema.sql`, config in `wrangler.toml`.
+
+To deploy the site: create a D1 database and load `db/schema.sql`, onboard the sending domain to Cloudflare Email Service, fill in `wrangler.toml`, set the `SECRET` secret, then `npx wrangler deploy`.
