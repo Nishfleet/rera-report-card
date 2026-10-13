@@ -3,7 +3,9 @@
   "asOf": "2026-10-13",
   "filings": [
     { "id": "reg1", "type": "registration", "date": "2026-08-01", "sourceUrl": "https://example.test/sample/rv-reg1", "payload": { "status": "revoked", "validUntil": "2028-01-01" } },
-    { "id": "q1", "type": "qpr", "date": "2026-07-20", "sourceUrl": "https://example.test/sample/rv-q1", "payload": { "deadline": "2026-07-31", "filedOn": "2026-07-20", "noticeIssued": false } }
+    { "id": "q1", "type": "qpr", "date": "2026-07-20", "sourceUrl": "https://example.test/sample/rv-q1", "payload": { "deadline": "2026-07-31", "filedOn": "2026-07-20", "noticeIssued": false } },
+    { "id": "ck-e", "type": "checked", "date": "2026-10-01", "sourceUrl": "https://example.test/sample/rv-ck", "payload": { "input": "extensions" } },
+    { "id": "ck-c", "type": "checked", "date": "2026-10-01", "sourceUrl": "https://example.test/sample/rv-ck", "payload": { "input": "complaints_orders" } }
   ],
   "stored": {
     "rulesVersion": "v1",

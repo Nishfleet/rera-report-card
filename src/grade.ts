@@ -13,7 +13,8 @@ export type InputName =
 
 export interface Filing {
   id: string;
-  // registration | qpr | extension | completion_date | complaint | order | progress | bank | unreadable
+  // registration | qpr | extension | completion_date | complaint | order | progress | bank | unreadable | checked
+  // "checked" (payload.input) records that a source was read and listed nothing, so zero means zero.
   type: string;
   date: string;
   sourceUrl: string;
@@ -87,11 +88,18 @@ const INPUT_OF_TYPE: Record<string, InputName> = {
 };
 
 // Inputs that must have a filing on record to count as read.
-// Extensions and complaints/orders read as zero when there are none.
 const NEEDS_FILING: Partial<Record<InputName, string>> = {
   registration: "registration",
   qpr: "qpr",
   completion_date: "completion_date",
+};
+
+// Inputs whose usual value is "none on file". No filings proves nothing on its own:
+// the input counts as read only with a filing of its own, or a "checked" filing saying
+// the source was read and listed nothing.
+const NEEDS_CHECK: Partial<Record<InputName, string[]>> = {
+  extensions: ["extension"],
+  complaints_orders: ["complaint", "order"],
 };
 
 function addMonths(iso: string, months: number): string {
@@ -246,6 +254,13 @@ export function grade(rules: RuleTable, filings: Filing[], asOf: Date): Grade {
     const needed = NEEDS_FILING[input];
     if (needed !== undefined && ofType(ctx, needed).length === 0) {
       unreadReason.set(input, "no filing on record");
+    }
+    const types = NEEDS_CHECK[input];
+    if (
+      types !== undefined &&
+      !ctx.filings.some((f) => types.includes(f.type) || (f.type === "checked" && f.payload.input === input))
+    ) {
+      unreadReason.set(input, "source not read");
     }
   }
   if (!unreadReason.has("progress") && ofType(ctx, "progress").length < 2) {
