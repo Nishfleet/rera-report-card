@@ -1,0 +1,22 @@
+{
+  "name": "Revoked registration, two inputs unread (invented)",
+  "asOf": "2026-10-13",
+  "filings": [
+    { "id": "reg1", "type": "registration", "date": "2026-08-01", "sourceUrl": "https://example.test/sample/rv-reg1", "payload": { "status": "revoked", "validUntil": "2028-01-01" } },
+    { "id": "q1", "type": "qpr", "date": "2026-07-20", "sourceUrl": "https://example.test/sample/rv-q1", "payload": { "deadline": "2026-07-31", "filedOn": "2026-07-20", "noticeIssued": false } }
+  ],
+  "stored": {
+    "rulesVersion": "v1",
+    "asOf": "2026-10-13",
+    "letter": "E",
+    "points": 39,
+    "reasons": [
+      { "ruleId": "R15", "points": 0, "impact": "High", "title": "Registration revoked", "detail": "The registration was revoked.", "filingId": "reg1", "filingDate": "2026-08-01", "sourceUrl": "https://example.test/sample/rv-reg1" }
+    ],
+    "unread": [
+      { "input": "completion_date", "reason": "no filing on record" },
+      { "input": "progress", "reason": "fewer than two reports on record" }
+    ],
+    "clean": ["qpr", "extensions", "complaints_orders"]
+  }
+}

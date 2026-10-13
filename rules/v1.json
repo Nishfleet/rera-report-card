@@ -1,0 +1,30 @@
+{
+  "version": "v1",
+  "changelog": "Initial table from PLAN.md section 7.4. Weights are a first guess pending review against real projects.",
+  "minReadableInputs": 3,
+  "bands": [
+    { "letter": "A", "min": 90, "max": 100 },
+    { "letter": "B", "min": 75, "max": 89 },
+    { "letter": "C", "min": 60, "max": 74 },
+    { "letter": "D", "min": 40, "max": 59 },
+    { "letter": "E", "min": 0, "max": 39 }
+  ],
+  "impact": { "high": 10, "medium": 5 },
+  "rules": [
+    { "id": "R1", "input": "qpr", "kind": "qpr_missed", "windowMonths": 12, "points": 8, "cap": 24, "title": "Quarterly report not filed", "detail": "A quarterly report was not filed by its deadline." },
+    { "id": "R2", "input": "qpr", "kind": "qpr_notice", "windowMonths": 12, "points": 2, "cap": 2, "title": "Notice for a missed report", "detail": "A notice was issued for a missed quarterly report." },
+    { "id": "R3", "input": "qpr", "kind": "qpr_late", "windowMonths": 12, "points": 3, "cap": 9, "title": "Quarterly report filed late", "detail": "A quarterly report was filed after its deadline." },
+    { "id": "R4", "input": "completion_date", "kind": "delay_between", "minMonths": 1, "maxMonths": 6, "points": 3, "cap": 3, "title": "Completion date moved", "detail": "The completion date moved 1 to 6 months later than first filed." },
+    { "id": "R5", "input": "completion_date", "kind": "delay_between", "minMonths": 7, "maxMonths": 12, "points": 8, "cap": 8, "title": "Completion date moved", "detail": "The completion date moved 7 to 12 months later than first filed." },
+    { "id": "R6", "input": "completion_date", "kind": "delay_between", "minMonths": 13, "maxMonths": 24, "points": 14, "cap": 14, "title": "Completion date moved", "detail": "The completion date moved 13 to 24 months later than first filed." },
+    { "id": "R7", "input": "completion_date", "kind": "delay_between", "minMonths": 25, "maxMonths": null, "points": 22, "cap": 22, "title": "Completion date moved", "detail": "The completion date moved more than 24 months later than first filed." },
+    { "id": "R8", "input": "extensions", "kind": "each", "filingType": "extension", "windowMonths": null, "points": 3, "cap": 6, "title": "Extension granted", "detail": "An extension of the registration was granted." },
+    { "id": "R9", "input": "complaints_orders", "kind": "count_between", "filingType": "complaint", "windowMonths": 24, "min": 1, "max": 2, "points": 2, "cap": 2, "title": "Complaints filed", "detail": "1 to 2 complaints were filed against the project in the last 24 months." },
+    { "id": "R10", "input": "complaints_orders", "kind": "count_between", "filingType": "complaint", "windowMonths": 24, "min": 3, "max": 5, "points": 5, "cap": 5, "title": "Complaints filed", "detail": "3 to 5 complaints were filed against the project in the last 24 months." },
+    { "id": "R11", "input": "complaints_orders", "kind": "count_between", "filingType": "complaint", "windowMonths": 24, "min": 6, "max": null, "points": 9, "cap": 9, "title": "Complaints filed", "detail": "6 or more complaints were filed against the project in the last 24 months." },
+    { "id": "R12", "input": "complaints_orders", "kind": "each", "filingType": "order", "windowMonths": 24, "points": 6, "cap": 18, "title": "Order issued", "detail": "An order was issued against the project or its promoter in the last 24 months." },
+    { "id": "R13", "input": "progress", "kind": "progress_flat", "points": 4, "cap": 4, "title": "No progress reported", "detail": "Reported percent complete did not rise between the last two filed reports." },
+    { "id": "R14", "input": "registration", "kind": "registration_lapsed", "points": 25, "cap": 25, "maxLetter": "D", "title": "Registration lapsed", "detail": "The registration validity passed with no extension on file." },
+    { "id": "R15", "input": "registration", "kind": "registration_revoked", "points": 0, "cap": 0, "maxLetter": "E", "impact": "High", "title": "Registration revoked", "detail": "The registration was revoked." }
+  ]
+}
