@@ -1,0 +1,60 @@
+name: Capture fixtures
+
+on:
+  workflow_dispatch:
+    inputs:
+      urls:
+        description: One URL per line
+        type: string
+        default: |
+          https://haryanarera.gov.in/
+          https://haryanarera.gov.in/robots.txt
+          https://haryanarera.gov.in/admincontrol/registered_projects/1
+          https://haryanarera.gov.in/admincontrol/registered_projects/2
+          https://haryanarera.gov.in/view_project/searchprojectDetail/1129
+
+permissions:
+  contents: read
+
+jobs:
+  capture:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Fetch URLs
+        env:
+          URLS: ${{ inputs.urls }}
+        run: |
+          mkdir -p out
+          cd out
+          UA='Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/130 Safari/537.36'
+          {
+            echo '### Captured fixtures'
+            echo
+            echo '| Slug | Status | Bytes | Final URL |'
+            echo '|---|---|---|---|'
+          } >> "$GITHUB_STEP_SUMMARY"
+          n=0
+          while IFS= read -r url; do
+            url=$(echo "$url" | tr -d '\r' | xargs)
+            [ -z "$url" ] && continue
+            n=$((n + 1))
+            slug=$(printf '%02d-%s' "$n" "$(echo "$url" | sed -E 's#^https?://##; s#[^A-Za-z0-9]+#-#g; s#-+$##' | cut -c1-80)")
+            status=$(curl -sS -L --max-time 30 -A "$UA" -D "$slug.headers.txt" -o "$slug.html" -w '%{http_code} %{url_effective}' "$url" || echo "000 curl-failed")
+            code=${status%% *}
+            final=${status#* }
+            [ -f "$slug.html" ] || : > "$slug.html"
+            bytes=$(wc -c < "$slug.html" | tr -d ' ')
+            sha=$(sha256sum "$slug.html" | cut -d' ' -f1)
+            jq -n --arg url "$url" --arg final "$final" --argjson status "${code:-0}" \
+              --argjson bytes "$bytes" --arg sha "$sha" --arg time "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+              '{url:$url, final_url:$final, status:$status, bytes:$bytes, sha256:$sha, fetched_at_utc:$time}' > "$slug.meta.json"
+            echo "$slug $code $bytes $final"
+            echo "| $slug | $code | $bytes | $final |" >> "$GITHUB_STEP_SUMMARY"
+          done <<< "$URLS"
+      - name: Upload artifact
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: fixtures-${{ github.run_id }}
+          path: out/
+          if-no-files-found: error

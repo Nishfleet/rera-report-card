@@ -1,0 +1,58 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - name: Detect package.json
+        id: detect
+        run: |
+          if [ -f package.json ]; then echo "has=true" >> "$GITHUB_OUTPUT"; else echo "No package.json yet, skipping tests"; fi
+      - if: steps.detect.outputs.has == 'true'
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 22
+          cache: npm
+      - if: steps.detect.outputs.has == 'true'
+        run: npm ci
+      - if: steps.detect.outputs.has == 'true'
+        run: npm test
+
+  live-fetch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Fetch the Gurugram list
+        run: |
+          url='https://haryanarera.gov.in/admincontrol/registered_projects/1'
+          UA='Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/130 Safari/537.36'
+          out=$(curl -sS -L --max-time 30 -A "$UA" -o body.html -w '%{http_code}' "$url")
+          bytes=$(wc -c < body.html | tr -d ' ')
+          echo "status=$out bytes=$bytes"
+          echo "live-fetch: status $out, $bytes bytes" >> "$GITHUB_STEP_SUMMARY"
+          test "$out" = 200
+
+  ci-ok:
+    needs: [test, live-fetch]
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check results
+        env:
+          TEST: ${{ needs.test.result }}
+          LIVE: ${{ needs.live-fetch.result }}
+        run: |
+          echo "test=$TEST live-fetch=$LIVE"
+          [ "$LIVE" = success ] || exit 1
+          [ "$TEST" = success ] || [ "$TEST" = skipped ] || exit 1
