@@ -15,6 +15,7 @@ const qpr = (id: string, date: string, deadline: string, filedOn: string | null,
   f(id, "qpr", date, { deadline, filedOn, noticeIssued });
 const cd = (original: string, current: string) =>
   f("cd", "completion_date", "2021-01-01", { originalDate: original, currentDate: current });
+const checked = (id: string, input: string) => f(id, "checked", "2026-10-01", { input });
 const prog = (id: string, date: string, percent: number) => f(id, "progress", date, { percent });
 
 // A project where every input reads clean: grades 100 A.
@@ -24,6 +25,8 @@ const base = (): Filing[] => [
   cd("2027-06-30", "2027-06-30"),
   prog("p1", "2026-01-20", 40),
   prog("p2", "2026-07-20", 50),
+  checked("ck-e", "extensions"),
+  checked("ck-c", "complaints_orders"),
 ];
 const ids = (filings: Filing[], table = v1, asOf = ASOF) =>
   grade(table, filings, asOf).reasons.map((r) => r.ruleId);
@@ -235,6 +238,23 @@ describe("unread inputs and withholding", () => {
   it("lists progress with fewer than two reports as unread", () => {
     const g = grade(v1, base().filter((x) => x.id !== "p2"), ASOF);
     expect(g.unread).toEqual([{ input: "progress", reason: "fewer than two reports on record" }]);
+  });
+
+  it("does not count extensions or complaints as clean unless their source was read", () => {
+    const unchecked = base().filter((x) => x.type !== "checked");
+    const g = grade(v1, unchecked, ASOF);
+    expect(g.unread).toEqual([
+      { input: "extensions", reason: "source not read" },
+      { input: "complaints_orders", reason: "source not read" },
+    ]);
+    // A filing of the input's own type is proof enough that the source was read.
+    const withOrder = grade(v1, [...unchecked, f("o1", "order", "2026-06-01")], ASOF);
+    expect(withOrder.unread.map((u) => u.input)).toEqual(["extensions"]);
+  });
+
+  it("withholds a grade when only the registration was read", () => {
+    const g = grade(v1, [reg("active", "2024-01-01")], ASOF);
+    expect([g.letter, g.points, g.reasons]).toEqual([null, null, []]);
   });
 
   it("takes the parser's reason for an unreadable input", () => {

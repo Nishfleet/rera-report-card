@@ -6,4 +6,4 @@ Every project has one page. The grade comes from public RERA filings, and every 
 
 The first scope is Maharashtra and the National Capital Region (NCR). Other states may follow once those work well.
 
-Status: planning, no code yet.
+Status: early build. The grader (`src/grade.ts`, rules in `rules/`) and the Haryana RERA reader (`src/states/hr/`) are in. Run `npm test`.
