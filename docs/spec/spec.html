@@ -1,0 +1,466 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>RERA Report Card | Product spec</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&amp;family=Playfair+Display:ital,wght@1,700&amp;display=swap" rel="stylesheet">
+  <script>
+    try {
+      var savedTheme = localStorage.getItem("spec-theme");
+      if (savedTheme) document.documentElement.dataset.theme = savedTheme;
+    } catch (error) {}
+  </script>
+  <style>
+    :root {
+      --canvas: #faf8f3;
+      --surface: #ffffff;
+      --ink: #1c1b18;
+      --ink-2: #6e6b64;
+      --ink-3: #9a968d;
+      --chip: #f1eee7;
+      --line: rgba(28, 27, 24, 0.16);
+      --line-soft: rgba(28, 27, 24, 0.08);
+      --shadow: 0 8px 24px rgba(28, 27, 24, 0.07);
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --canvas: #17170f;
+        --surface: #232320;
+        --ink: #f3f1eb;
+        --ink-2: #a6a39b;
+        --ink-3: #726f67;
+        --chip: #2c2b27;
+        --line: rgba(243, 241, 235, 0.16);
+        --line-soft: rgba(243, 241, 235, 0.09);
+        --shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+      }
+    }
+
+    :root[data-theme="dark"] {
+      --canvas: #17170f;
+      --surface: #232320;
+      --ink: #f3f1eb;
+      --ink-2: #a6a39b;
+      --ink-3: #726f67;
+      --chip: #2c2b27;
+      --line: rgba(243, 241, 235, 0.16);
+      --line-soft: rgba(243, 241, 235, 0.09);
+      --shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+    }
+
+    :root[data-theme="light"] {
+      --canvas: #faf8f3;
+      --surface: #ffffff;
+      --ink: #1c1b18;
+      --ink-2: #6e6b64;
+      --ink-3: #9a968d;
+      --chip: #f1eee7;
+      --line: rgba(28, 27, 24, 0.16);
+      --line-soft: rgba(28, 27, 24, 0.08);
+      --shadow: 0 8px 24px rgba(28, 27, 24, 0.07);
+    }
+
+    * { box-sizing: border-box; }
+    html { background: var(--canvas); color-scheme: light dark; }
+    body {
+      margin: 0;
+      padding: 0 20px 96px;
+      background: var(--canvas);
+      color: var(--ink);
+      font: 15.5px/1.6 "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    button, input, textarea, select { font: inherit; }
+    a {
+      color: inherit;
+      text-decoration-color: var(--ink-3);
+      text-underline-offset: 3px;
+    }
+    a:hover { text-decoration-color: var(--ink); }
+    img { display: block; max-width: 100%; }
+    .wrap { width: min(100%, 900px); margin-inline: auto; }
+
+    .masthead {
+      width: min(100%, 900px);
+      margin: 52px auto 8px;
+      display: flex;
+      align-items: flex-start;
+      gap: 16px;
+    }
+    .masthead-copy { flex: 1; min-width: 0; }
+    .kicker {
+      margin: 0 0 12px;
+      color: var(--ink-3);
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.11em;
+      text-transform: uppercase;
+    }
+    .title {
+      margin: 0 0 10px;
+      font: italic 700 clamp(34px, 5vw, 48px)/1.05 "Playfair Display", Georgia, serif;
+      letter-spacing: -0.01em;
+    }
+    .tagline {
+      max-width: 58ch;
+      margin: 0;
+      color: var(--ink-2);
+      font-size: 16.5px;
+    }
+    .theme-toggle {
+      width: 40px;
+      height: 40px;
+      flex: none;
+      margin-top: 4px;
+      border: 1px solid var(--line);
+      border-radius: 50%;
+      background: transparent;
+      color: var(--ink);
+      cursor: pointer;
+    }
+    .theme-toggle:hover { background: var(--chip); }
+
+    .tabs {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      width: min(100%, 900px);
+      margin: 30px auto 0;
+      padding: 12px 0;
+      display: flex;
+      gap: 8px;
+      border-bottom: 1px solid var(--line-soft);
+      background: var(--canvas);
+    }
+    .tab {
+      padding: 8px 18px;
+      border: 0;
+      border-radius: 999px;
+      background: transparent;
+      color: var(--ink-2);
+      font-size: 13.5px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .tab:hover { background: var(--chip); }
+    .tab[aria-selected="true"] {
+      background: var(--ink);
+      color: var(--canvas);
+    }
+    .tab:focus-visible,
+    .theme-toggle:focus-visible {
+      outline: 2px solid var(--ink-3);
+      outline-offset: 2px;
+    }
+
+    .panel { display: none; padding-top: 36px; }
+    .panel.active { display: block; }
+    h2 {
+      margin: 52px 0 8px;
+      font-size: 22px;
+      line-height: 1.25;
+      letter-spacing: -0.02em;
+    }
+    h2:first-child { margin-top: 0; }
+    h3 {
+      margin: 34px 0 8px;
+      font-size: 16px;
+      line-height: 1.35;
+      letter-spacing: -0.01em;
+    }
+    h4 {
+      margin: 26px 0 8px;
+      color: var(--ink-2);
+      font-size: 11.5px;
+      font-weight: 600;
+      letter-spacing: 0.09em;
+      text-transform: uppercase;
+    }
+    p { max-width: 70ch; margin: 10px 0; }
+    .subtle { color: var(--ink-2); font-size: 14px; }
+    .goals { margin: 14px 0; padding-left: 22px; }
+    .goals li { margin: 7px 0; }
+    code {
+      padding: 1px 6px;
+      border-radius: 6px;
+      background: var(--chip);
+      font: 0.88em ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+    .status {
+      display: inline-block;
+      padding: 3px 11px;
+      border-radius: 999px;
+      background: var(--chip);
+      color: var(--ink-2);
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+    }
+
+    .table-wrap {
+      width: 100%;
+      margin: 16px 0;
+      overflow-x: auto;
+      border-radius: 12px;
+      -webkit-overflow-scrolling: touch;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+    th {
+      padding: 0 14px 10px 0;
+      border-bottom: 1px solid var(--line);
+      color: var(--ink-3);
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-align: left;
+      text-transform: uppercase;
+    }
+    td {
+      padding: 11px 14px 11px 0;
+      border-bottom: 1px solid var(--line-soft);
+      vertical-align: top;
+    }
+    td:first-child { font-weight: 600; }
+
+    .cards,
+    .mock-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+      margin: 18px 0;
+    }
+    .card,
+    .mock {
+      border: 1px solid var(--line-soft);
+      border-radius: 16px;
+      background: var(--surface);
+      box-shadow: var(--shadow);
+    }
+    .card { padding: 18px 20px; }
+    .card h3 { margin: 0 0 6px; font-size: 14.5px; }
+    .card p { margin: 0; color: var(--ink-2); font-size: 13.5px; }
+    .mock { margin: 0; overflow: hidden; }
+    .mock img {
+      width: 100%;
+      height: auto;
+      background: var(--chip);
+    }
+    .mock figcaption {
+      padding: 14px 16px 16px;
+      color: var(--ink-2);
+      font-size: 13.5px;
+    }
+    .mock figcaption strong {
+      display: block;
+      margin-bottom: 3px;
+      color: var(--ink);
+    }
+    .trade-off {
+      margin: 20px 0;
+      padding: 2px 0 2px 20px;
+      border-left: 2px solid var(--line);
+    }
+    .trade-off h3 { margin: 0 0 4px; font-size: 15px; }
+    .trade-off p { margin: 4px 0; color: var(--ink-2); font-size: 14px; }
+
+    @media (max-width: 640px) {
+      body { padding-inline: 16px; padding-bottom: 64px; }
+      .masthead { margin-top: 32px; }
+      .tabs {
+        margin-top: 20px;
+        overflow-x: auto;
+        scrollbar-width: none;
+      }
+      .tabs::-webkit-scrollbar { display: none; }
+      .tab { flex: 0 0 auto; }
+      .panel { padding-top: 28px; }
+      h2 { margin-top: 40px; }
+      .cards,
+      .mock-grid { grid-template-columns: 1fr; }
+      .table-wrap table { min-width: 620px; }
+      .table-wrap.compact table { min-width: 520px; }
+    }
+
+    @media (prefers-reduced-motion: no-preference) {
+      .panel.active { animation: panel-in 180ms ease-out; }
+      @keyframes panel-in {
+        from { opacity: 0; transform: translateY(4px); }
+        to { opacity: 1; transform: none; }
+      }
+    }
+
+    .shot { max-height: 620px; overflow: auto; border-top: 1px solid var(--line-soft); background: var(--chip); }
+    .shot:focus-visible { outline: 2px solid var(--ink-3); outline-offset: -2px; }
+    .shot img { width: 100%; height: auto; }
+    .verdict { margin: 10px 0; padding: 12px 16px; border: 1px solid var(--line-soft); border-radius: 12px; background: var(--surface); }
+    .verdict p { margin: 2px 0; font-size: 14px; }
+    .verdict .v { font-weight: 700; }
+    .refs img { width: 100%; height: auto; }
+  </style>
+</head>
+<body>
+  <header class="masthead">
+    <div class="masthead-copy">
+      <p class="kicker">Last updated 13 Oct 2026</p>
+      <h1 class="title">RERA Report Card</h1>
+      <p class="tagline">A public report card for every under-construction housing project, graded from the project's own RERA filings, with a follow button that emails you when the record changes.</p>
+    </div>
+    <button class="theme-toggle" id="theme-toggle" type="button" aria-label="Toggle color theme" title="Toggle color theme">◐</button>
+  </header>
+
+  <nav class="tabs" role="tablist" aria-label="Specification sections">
+    <button class="tab" id="tab-product" type="button" role="tab" aria-selected="true" aria-controls="panel-product" tabindex="0" data-panel="product">Product</button>
+    <button class="tab" id="tab-design" type="button" role="tab" aria-selected="false" aria-controls="panel-design" tabindex="-1" data-panel="design">Design</button>
+    <button class="tab" id="tab-tech" type="button" role="tab" aria-selected="false" aria-controls="panel-tech" tabindex="-1" data-panel="tech">Tech</button>
+  </nav>
+
+  <main>
+<section class="panel active wrap" id="panel-product" role="tabpanel" aria-labelledby="tab-product" data-panel="product">
+<h2>Problem + goal</h2>
+<p>The customer is a homebuyer who is about to pay a token or booking amount for an under-construction flat, or who already pays builder demand letters. The RERA filings that show whether a project keeps up with its duties are public, but they sit on state portals, one page per project. The portals we checked show the number, dates and sometimes progress. Square Yards (checked 13 Oct 2026) shows a progress figure, the bank and the dates, and shows no lapse, missed quarterly report, complaint or extension. reratracker.com covers NCR only and has no public score. MahaRERA sent notices to <a href="https://www.outlookmoney.com/invest/maharera-flags-8212-projects-for-missing-qpr-deadline-gives-regulatory-warning">8,212 projects</a> for missing the Jan to Mar 2026 quarterly progress report (QPR), reported on 4 May 2026. It paused its own grading plan in November 2024 because the Act <a href="https://propnewstime.com/latestnewsstories/MTIxNDc=/maharera-halts-real-estate-project-grading-initiative-due-to-legal-constraints">gives it no power to grade</a>.</p>
+<p>Buyers now see a RERA number on almost every ad, because MahaRERA requires a QR code and the number on each one (order of 8 Apr 2025, <a href="https://housing.com/news/maharera-fines-628-projects-for-not-displaying-qr-code-registration-number/">628 projects fined</a> in July 2024, figure unverified here). They have a number to type and no page that says what the filings show. Channel partners drive 32% of buying across India (ANAROCK 2024) and about 60% in the Mumbai region (CREDAI-MCHI). Maharashtra had 50,673 registered agents, 31,980 active (May 2025). A broker who forwards a clean page is our distribution.</p>
+<ul class="goals"><li><strong>Output, proposed:</strong> 2,000 confirmed followers within 90 days of public launch. A follower has confirmed an email through the double opt-in link.</li><li><strong>Input 1, proposed:</strong> 90% of under-construction projects in Maharashtra and NCR have a readable grade.</li><li><strong>Input 2, proposed:</strong> 5 or more share taps per 100 grade-page views.</li></ul>
+<h2>Solution</h2>
+<p>RERA Report Card gives every under-construction housing project one public page with a grade from A to E and up to five plain reasons, each citing the filing, its date and its source URL, and a follow button that emails the reader when the record changes.</p>
+<p class="subtle"><strong>Core loop:</strong> Search "[project name] RERA" or the number → Read the grade and cited reasons → Share the page on WhatsApp or follow it → Get an email when a filing changes → Come back each quarter when the next report is due</p>
+<p class="subtle"><strong>Scope:</strong> Decided. Version 1 covers Maharashtra (MahaRERA) and NCR (Haryana RERA for Gurugram and Panchkula, UP RERA, Delhi RERA). The user is a homebuyer before or during payment. The secondary user is a channel partner who shares pages of healthy projects. The grade uses only public filings: QPR filed on time or missed, registration lapsed or revoked, extensions, revised against original completion date, complaints and orders, and bank account and percent complete where published. Cited facts only is a product principle, because MahaRERA halted its own grading for lack of legal power and builders may sue a private grader for defamation. The pages are server-rendered public HTML. Out of scope are other states, promoter-level grades, a mobile app, paid tiers and interface languages other than English. Monetization is not covered here.</p>
+<h3>Strength tests</h3>
+<p class="subtle">The owner's four tests, each answered in one line. The weakest is the third. Quarterly emails and the share loop are the answer to it.</p>
+<div class="verdict"><p><span class="v">Test 1: Passes.</span> Sits on a money or decision moment. The reader decides whether to pay a token or a demand letter and the page answers one question at that moment.</p></div>
+<div class="verdict"><p><span class="v">Test 2: Passes.</span> One party can adopt it alone. The reader needs no builder consent and no regulator integration, because every input is already public.</p></div>
+<div class="verdict"><p><span class="v">Test 3: Partly.</span> Repeat use or share loop. The share loop is strong because the page is built to be forwarded on WhatsApp. Repeat use per buyer is weak, because a family buys one flat. Quarterly follow emails give four touches a year.</p></div>
+<div class="verdict"><p><span class="v">Test 4: Passes.</span> Data compounds over time. Each nightly read adds a dated snapshot, and a portal shows only the current state (reasoning, to confirm in Milestone 0).</p></div>
+<h2>Requirements</h2>
+<p class="subtle">Milestones are in build order. Every route is public and needs no sign-in. Acceptance ids such as GP-2 are defined in <code>PLAN.md</code> section 6.</p>
+<h3>Milestone 1: Grade one state <span class="status">not started</span></h3>
+<h4>Search, route <code>/</code></h4>
+<div class="table-wrap compact"><table><thead><tr><th>Label</th><th>Behavior</th></tr></thead><tbody><tr><td>Input</td><td>One large input with the hint "Project name or RERA number". A RERA number matching a known pattern goes straight to its page on Enter. A lower-case number loads the same page.</td></tr><tr><td>Suggestions</td><td>A name query shows at most 8 suggestions, each with project, promoter, district and grade letter.</td></tr><tr><td>Unknown number</td><td>Shows "We do not have this registration yet. We read new projects every night." and stores the number once.</td></tr><tr><td>No script</td><td>With JavaScript off, Enter goes to <code>/search?q=</code> and shows the same results.</td></tr></tbody></table></div>
+<h4>Grade page, route <code>/p/:state/:regno</code></h4>
+<div class="table-wrap compact"><table><thead><tr><th>Label</th><th>Behavior</th></tr></thead><tbody><tr><td>Grade card</td><td>Shows one letter A to E on a five-segment gauge, a word ("Strong record", "Good record", "Mixed record", "Weak record", "Poor record"), the date of the last change, and "Read from MahaRERA on [date and time]. Next read tonight." The letter equals the stored grade of the latest run (GP-1).</td></tr><tr><td>Reasons</td><td>Shows at most five reasons that lowered the grade, largest points first. Each has a title, one detail line, a filing name, a date, a source link and an impact word (High, Medium, Low). A reason missing any of filing, date or link never renders (GP-2). With more than five, the page shows "2 more reasons in the full list".</td></tr><tr><td>Checked and unread</td><td>A card lists inputs that were read and clean. Another lists inputs we could not read, with the reason. An unread input never lowers the grade (GR-4).</td></tr><tr><td>Grade history</td><td>Six cells show the grade at the start of each of the last six months. A change is marked.</td></tr><tr><td>Withheld</td><td>With fewer than 3 of the 6 inputs readable, the page shows "Grade not available yet", the facts we have and the <code>noindex</code> tag (GP-6).</td></tr><tr><td>States</td><td>Graded, not enough filings, stale (banner after 14 days without a good read), lapsed, revoked (grade E), completed (no follow button), not found.</td></tr><tr><td>Disclaimer</td><td>Under every grade: "A grade summarises filings. It is not advice on whether to buy or pay." No banned word appears in page text (GP-7).</td></tr><tr><td>Layout</td><td>No horizontal scroll at 390 and 1440 pixels. From 900 pixels the grade card sticks left and reasons sit in two columns.</td></tr></tbody></table></div>
+<h4>Grader and rule table</h4>
+<div class="table-wrap compact"><table><thead><tr><th>Label</th><th>Behavior</th></tr></thead><tbody><tr><td>Pure function</td><td><code>grade(rules, filings, asOf)</code> returns byte-identical output for the same input (GR-1). Replaying any stored grade from its stored filings and rule version returns the same letter, points and reasons (GR-2).</td></tr><tr><td>Rule table v1</td><td>Versioned JSON, proposed weights in <code>PLAN.md</code> section 7.4. Bands: A 90 to 100, B 75 to 89, C 60 to 74, D 40 to 59, E 0 to 39. Revoked is E. Lapsed is at most D. A new version is a new file and re-grades every project.</td></tr><tr><td>Monotonic</td><td>Adding a negative fact never raises the grade (GR-3). A missing input never lowers it.</td></tr><tr><td>No money input</td><td>The function has no input for payment, advertising or relationship.</td></tr></tbody></table></div>
+<h3>Milestone 2: Follow and email <span class="status">not started</span></h3>
+<h4>Follow, route <code>/p/:state/:regno</code> and <code>/follow/confirm</code></h4>
+<div class="table-wrap compact"><table><thead><tr><th>Label</th><th>Behavior</th></tr></thead><tbody><tr><td>Sheet</td><td>"Follow this project" opens a sheet with one email field, the button "Follow" and the line "One email when the record changes. One email each quarter. Nothing else."</td></tr><tr><td>Double opt-in</td><td>A valid email sends one confirmation. A repeat within 10 minutes sends none. The link opens a page with one button, "Confirm and follow", and only the button activates (FL-3). The link expires after 7 days. An invalid email shows "Enter an email like name@example.com".</td></tr><tr><td>Following state</td><td>The button shows a check and "Following" on later visits from the same browser, and opens a menu with "Unfollow".</td></tr><tr><td>Manage and delete</td><td>Every email footer links to a manage page with unfollow for each project and "Unfollow all and delete my email", which deletes the follower row at once.</td></tr></tbody></table></div>
+<h4>Emails</h4>
+<div class="table-wrap compact"><table><thead><tr><th>Label</th><th>Behavior</th></tr></thead><tbody><tr><td>Triggers</td><td>New quarterly report, missed quarterly report, registration lapsed or revoked, extension applied for or granted, new complaint or order, completion date changed. A grade change travels in the same email.</td></tr><tr><td>Two-run rule</td><td>A change must show in two consecutive nightly reads. A change seen once sends nothing (EM-1). Seen twice sends exactly one email per confirmed follower (EM-2).</td></tr><tr><td>Timing</td><td>At most one email per follower per day, between 08:00 and 21:00 IST. A change confirmed later waits for 08:00 (EM-5).</td></tr><tr><td>Quarterly email</td><td>3 days after each state's QPR deadline (proposed), every follower of an under-construction project gets "[Project]: quarterly report filed" or "[Project]: quarterly report not filed", even if nothing else changed (EM-6). Followers therefore get at least four emails a year.</td></tr><tr><td>Body</td><td>The changed fact with its date and source, the old and new grade, one button and an unfollow link, with a <code>List-Unsubscribe</code> header. No recommendation and no banned word (EM-10).</td></tr></tbody></table></div>
+<h4>Timeline, route <code>/p/:state/:regno/timeline</code></h4>
+<div class="table-wrap compact"><table><thead><tr><th>Label</th><th>Behavior</th></tr></thead><tbody><tr><td>Events</td><td>Newest first, grouped by month. Each shows a marker, date, title, one line and a source link. An event that caused an email shows "Emailed to followers".</td></tr><tr><td>Follower cards</td><td>A follower sees "You follow this project" with grade, next expected filing and masked email, and "Last email we sent you". A non-follower sees "Follow" and none of these cards. The timeline stays public.</td></tr><tr><td>Quiet checks</td><td>Nightly checks with no change collapse into one line with a count.</td></tr></tbody></table></div>
+<h3>Milestone 3: NCR states <span class="status">not started</span></h3>
+<div class="table-wrap compact"><table><thead><tr><th>Label</th><th>Behavior</th></tr></thead><tbody><tr><td>States</td><td>Haryana RERA (Gurugram and Panchkula) first because it loads from Cloudflare. Delhi RERA and UP RERA as their portals allow. Codes: <code>hr</code>, <code>dl</code>, <code>up</code>.</td></tr><tr><td>One interface</td><td>Each state has one fetch job behind one interface. A fake state in a test needs no change to other code (IN-1).</td></tr><tr><td>Field map</td><td>Each state shows its own inputs. A state that does not publish an input shows it under "We could not read".</td></tr></tbody></table></div>
+<h3>Milestone 4: Pages at scale and sharing <span class="status">not started</span></h3>
+<div class="table-wrap compact"><table><thead><tr><th>Label</th><th>Behavior</th></tr></thead><tbody><tr><td>Share</td><td>"Share" opens the share sheet on a phone and copies the link on desktop. "Share on WhatsApp" opens <code>wa.me</code> with the page URL and the top reason. Links carry <code>?s=wa</code> for counting.</td></tr><tr><td>Preview card</td><td>The page has absolute <code>og:title</code>, <code>og:description</code>, <code>og:image</code> and <code>og:url</code>. The image is a 1200 by 630 PNG under 300 KB (proposed) showing project, letter and top reason. It is drawn when the grade or top reason changes (SH-1, SH-2).</td></tr><tr><td>Promoter page</td><td>Route <code>/promoter/:state/:slug</code> lists the promoter's projects with grade, status and last change. It shows no promoter grade.</td></tr><tr><td>District page</td><td>Route <code>/d/:state/:district</code> lists projects with a filter by grade letter and name.</td></tr><tr><td>Search engines</td><td>Project number and name are in the title, the URL and the h1. Sitemaps list graded projects in shards of at most 50,000 URLs. Ungraded projects are <code>noindex</code>.</td></tr><tr><td>Corrections</td><td>Route <code>/correct/:regno</code> takes the disputed fact, the filing that shows the correct fact and a contact email. The page shows "A correction request is under review since [date]". A fact changes only when a stored raw object changes (CR-4).</td></tr></tbody></table></div>
+<h3>Milestone 5: Launch gate <span class="status">not started</span></h3>
+<div class="table-wrap compact"><table><thead><tr><th>Label</th><th>Behavior</th></tr></thead><tbody><tr><td>Review</td><td>An advocate has reviewed copy, rule table and corrections. A data protection check is done.</td></tr><tr><td>Dark launch</td><td>Fewer than 2 wrong facts in 100 sampled reasons. The public correction log at <code>/corrections</code> is open.</td></tr></tbody></table></div>
+<h2>Open decisions</h2>
+<div class="table-wrap compact"><table><thead><tr><th>Decision</th><th>Why it is open</th><th>Owner · date</th></tr></thead><tbody><tr><td>India fetcher choice (money)</td><td>Our servers cannot reach MahaRERA. Options: Indian VM runner, Oracle free VM, Exit node on a machine in India, GitHub runners, residential proxy. Recommended: the Indian VM on DigitalOcean Bangalore, about USD 4 to 6 a month, after a one-day test. Section Tech has the table.</td><td>Owner · 2026-10-20</td></tr><tr><td>Brand name</td><td>Candidates: RERA Report Card (working), Flatcheck, Nigrani, Allottee Desk, Sthiti (Hindi and Marathi for status), Tapasni (Marathi for inspection). Domain and trademark not checked.</td><td>Owner · 2026-10-26</td></tr><tr><td>Promoter-level grades in v1</td><td>Recommend no. A promoter grade needs rules for joint ventures, shell entities and old projects, and speaks about a company and not a filing, which carries the highest defamation risk. Show promoter pages with cited orders only.</td><td>Owner · 2026-11-09</td></tr><tr><td>Sample registration number</td><td>Done. The design screens use the fictional number P52100000000 and the promoter Example Realty LLP.</td><td>Closed · 2026-10-13</td></tr><tr><td>Wording reviewer</td><td>One advocate for copy, rule table and corrections.</td><td>Owner · 2026-11-09</td></tr><tr><td>Monetization</td><td>Out of scope. No evidence on willingness to pay.</td><td>Owner · no date</td></tr></tbody></table></div>
+</section>
+<section class="panel wrap" id="panel-design" role="tabpanel" aria-labelledby="tab-design" data-panel="design" hidden>
+<h2>Direction</h2>
+<p>A clear, quiet public record. The page is a grey-white sheet and one blue accent marks only what the reader can act on or what is current. The grade letter is large and plain, and every claim sits next to its source. Words carry meaning before colour, so the page reads in greyscale. The owner called the earlier HTML screens generic, so both screens here start from eight real app screens on Mobbin (below) and no brand colour, icon or copy was taken from them.</p>
+<div class="cards"><article class="card"><h3>Source beside every claim</h3><p>A reason without a filing name, a date and a link does not render.</p></article><article class="card"><h3>Words before colour</h3><p>Impact is a word and three dots. The grade is a letter. No red and green traffic lights.</p></article><article class="card"><h3>One action per screen</h3><p>Follow on the grade page. Following on the timeline. Share is secondary.</p></article></div>
+<h2>Representative designs</h2>
+<p class="subtle">Hand-written HTML in <code>spec-assets/src/</code> rendered at 2x with headless Chrome. Both frames scroll. Both screens carry a "Sample data" notice because the facts are invented. Proofs at 1440 pixels: <a href="spec-assets/main-value-screen-1440.png">grade page</a> and <a href="spec-assets/main-action-screen-1440.png">timeline</a>.</p>
+<div class="mock-grid">
+        <figure class="mock">
+          <div class="shot" tabindex="0" role="region" aria-label="Grade page screen, scrollable"><img src="spec-assets/main-value-screen.png" alt="Phone screen of the grade page for the sample project Aarohi Greens, Phase 2. A gauge shows grade C, Mixed record, down from B on 4 May 2026. Four cited reasons follow with impact labels, then a checked list, a six-month grade history and a Follow this project button."></div>
+          <figcaption><strong>Main value screen</strong>The grade page, route /p/:state/:regno. Shows requirements for the grade card, at most five cited reasons with impact words, checked and unread inputs, grade history, and the Follow and Share dock. Shapes from Credit Karma, Rocket Money, One and CRED.</figcaption>
+        </figure>
+        <figure class="mock">
+          <div class="shot" tabindex="0" role="region" aria-label="Filing timeline screen, scrollable"><img src="spec-assets/main-action-screen.png" alt="Phone screen of the filing timeline for the same project. The header has a Following button with a check. Cards show the grade, the next expected report, the masked email and a copy of the last email sent. A timeline of five dated filings follows, with Emailed to followers tags, then the six change triggers."></div>
+          <figcaption><strong>Main action screen</strong>The follow state and filing timeline, route /p/:state/:regno/timeline. Shows requirements for the Following button, follower cards, the email copy, dated events and the six triggers. Shapes from Wise, Better Stack and incident.io.</figcaption>
+        </figure>
+      </div>
+<h3>Mobbin references</h3>
+<div class="table-wrap compact"><table><thead><tr><th>Reference</th><th>Taken</th><th>Used in</th></tr></thead><tbody><tr><td><a href="https://mobbin.com/screens/dfcabcd8-a9aa-4771-9e56-0ce6aed1872e">Credit Karma score page</a></td><td>Large score, next update line, three-stat strip</td><td>Grade card, stat strip, read line</td></tr><tr><td><a href="https://mobbin.com/screens/cc0bea8c-01ee-4301-916e-445f810aaf8e">Rocket Money gauge and history</a></td><td>Arc gauge in a white card, history card, capital-letter section labels</td><td>Gauge, grade history, labels</td></tr><tr><td><a href="https://mobbin.com/screens/2fdcc0ed-6e23-4371-adc9-2cc3dffbd0c7">One factors list</a></td><td>Factor rows with status word and measured value</td><td>Reason rows</td></tr><tr><td><a href="https://mobbin.com/screens/b4c37acb-ae4d-4c71-b04f-623b94abd545">CRED score decreased</a></td><td>Impact card with one sentence and an impact word</td><td>Reason cards, impact dots</td></tr><tr><td><a href="https://mobbin.com/screens/ea2fde3e-8b3e-4ef8-92d9-ea5dc9e51fda">Wise transaction updates</a></td><td>Vertical stepper with timestamps</td><td>Timeline events</td></tr><tr><td><a href="https://mobbin.com/screens/76f87fea-775d-47e6-b97a-b2d234f6c46b">Better Stack incident timeline</a></td><td>Rail with typed icons, muted system events</td><td>Timeline markers, quiet nightly check</td></tr><tr><td><a href="https://mobbin.com/screens/8d27748b-e522-40ba-a951-f718beb76799">incident.io subscribed button</a></td><td>Subscribed button with a check in the header</td><td>Following button</td></tr><tr><td><a href="https://mobbin.com/screens/764b4870-3557-4a3b-a76a-b8dc57e74914">Perplexity Patents</a></td><td>One large input, mode chips, how-to card</td><td>Search landing (specified, not rendered)</td></tr></tbody></table></div>
+<h2>System and components</h2>
+<div class="table-wrap compact"><table><thead><tr><th>Dimension</th><th>Rule</th></tr></thead><tbody><tr><td>Color</td><td>Canvas #f5f4ef, surface #ffffff, ink #15171c, secondary text #565b66, decoration only #8b909b, line #e4e2da. One accent #1d4ed8 with white text, wash #e8eefc. The accent marks the current gauge segment, the primary button, links, impact dots, the Following state and the Emailed tag. No red and green. Contrast figures are estimates and a tool check is in Milestone 1.</td></tr><tr><td>Typography</td><td>Inter, then Noto Sans Devanagari, Nirmala UI, Kohinoor Devanagari and system fonts, so Marathi and Hindi names render. Mono for registration numbers. Grade letter 72/72 at 700. Page title 24/30. Card title 16/22 at 600. Body 15/22. Detail 14/21. Small 13/20. Label 12/16, upper case, +0.08em.</td></tr><tr><td>Spacing and shape</td><td>Base 8 pixels with a 4 pixel half step. Radius 12 for inputs and chips, 14 for the email preview, 20 for cards, pill for buttons. A 1 pixel soft line and one light shadow. Phone first at 390 pixels. From 900 pixels the grade card is a 380 pixel sticky left column and reasons sit in two columns. Maximum width 1120 pixels.</td></tr><tr><td>Icons and motion</td><td>Outline icons beside a word, 1.7 to 2.2 stroke, inline SVG. Hover and press 120 ms, sheets 180 ms. Only opacity and a 4 pixel move animate. Reduced motion removes the move. Touch targets are 44 pixels or more.</td></tr></tbody></table></div>
+<div class="table-wrap compact"><table><thead><tr><th>Component</th><th>Purpose</th><th>States</th><th>Required behavior</th></tr></thead><tbody><tr><td>Gauge</td><td>Show the letter on an E to A scale</td><td>Graded, withheld</td><td>Five arcs, current segment in the accent. Withheld shows grey arcs and "Not available yet". Has an aria-label such as "Grade C on a scale from E to A".</td></tr><tr><td>Reason card</td><td>One cited fact that moved the grade</td><td>Default, expanded</td><td>Icon, title, detail, impact row, source row. Expanded shows a short excerpt of the stored filing. Never renders without filing, date and link.</td></tr><tr><td>Impact label</td><td>Say how much a reason counted</td><td>High, Medium, Low</td><td>Three dots and a word. 10 or more points is High, 5 to 9 Medium, under 5 Low.</td></tr><tr><td>Grade history strip</td><td>Show change over six months</td><td>Default</td><td>Six cells of letter and month. Cells with the current grade use the accent wash.</td></tr><tr><td>Follow button</td><td>Start a follow</td><td>Default, sheet open, pending, following</td><td>Following shows a check. Opens a sheet with one email field. Pending says "Check your email to confirm."</td></tr><tr><td>Timeline event</td><td>One dated filing or check</td><td>Filed, missed, order, date change, nightly check</td><td>Marker, date, title, detail, source. The missed marker is ink, not red. The email tag shows when an email went out.</td></tr><tr><td>Email preview</td><td>Show what an email looks like</td><td>Default</td><td>A bordered copy of the real email inside the follower card.</td></tr><tr><td>Search input</td><td>Find a project by name or number</td><td>Empty, typing, no match</td><td>One large input, up to 8 suggestions with a grade letter, chips for cities.</td></tr></tbody></table></div>
+</section>
+<section class="panel wrap" id="panel-tech" role="tabpanel" aria-labelledby="tab-tech" data-panel="tech" hidden>
+<h2>Architecture</h2>
+<h3>First risk: ingestion, proven on 13 Oct 2026</h3>
+<p>The data lives on state portals. Maharashtra and Delhi do not answer from our servers outside India or from Cloudflare. A fetcher inside India is needed.</p>
+<div class="table-wrap compact"><table><thead><tr><th>Source</th><th>From</th><th>Result</th></tr></thead><tbody><tr><td>maharera.maharashtra.gov.in</td><td>our server outside India</td><td>Resolves, then times out after 15 seconds</td></tr><tr><td>maharera.maharashtra.gov.in</td><td>Cloudflare Workers (two European edge locations)</td><td>Times out</td></tr><tr><td>Delhi RERA and rera.mohua.gov.in</td><td>Cloudflare Workers</td><td>Time out</td></tr><tr><td>haryanarera.gov.in</td><td>Cloudflare Workers</td><td>Loads, HTTP 200</td></tr><tr><td>up-rera.in/projects</td><td>Cloudflare Workers</td><td>Redirects to a maintenance page</td></tr><tr><td>maharera.maharashtra.gov.in</td><td>A machine in India</td><td>Loads with no CAPTCHA on the home search form. The form has a Registered or Revoked toggle and search by name, registration number, pincode, completion date and district, plus "View Projects on Map"</td></tr></tbody></table></div>
+<p class="subtle">Prior art, code not read: <a href="https://github.com/answerquest/mahaRERA-map-scrape">answerquest/mahaRERA-map-scrape</a> (GIS map to CSV, 2023) and <a href="https://github.com/VinayJangra777/maharera_scraper">VinayJangra777/maharera_scraper</a> (Playwright plus pytesseract CAPTCHA solving on some pages, Aug 2025). We do not solve CAPTCHA. An Indian cloud address is also untested, because only a home connection has loaded the portal so far.</p>
+<h4>Options for an India-located fetcher</h4>
+<div class="table-wrap"><table><thead><tr><th>Option</th><th>Cost</th><th>Trade-off</th></tr></thead><tbody><tr><td>(a) Small Indian cloud VM as a GitHub self-hosted runner (DigitalOcean Bangalore, AWS Mumbai)</td><td>About USD 4 to 6 a month</td><td>Always on, stable address. Needs updates and a locked-down runner on a private repo. A data centre address may still be blocked.</td></tr><tr><td>(a2) Oracle Cloud always-free VM, Mumbai</td><td>USD 0, card verification needed</td><td>Free. Extra account steps. Reports say idle free instances can be reclaimed (unverified here).</td></tr><tr><td>(b) Exit node on a machine in India</td><td>USD 0</td><td>Proven to load the portal. Works only while that machine is awake. Not a service.</td></tr><tr><td>(c) GitHub-hosted runners</td><td>USD 0 within plan limits</td><td>Untested at the time of writing. Probably blocked like our servers outside India.</td></tr><tr><td>(d) Paid residential proxy</td><td>Per GB, price not fetched</td><td>Rejected unless (a) fails. Adds a third party and a policy risk.</td></tr></tbody></table></div>
+<p><strong>Recommendation: (a) on DigitalOcean Bangalore, tested for one day first.</strong> An hourly droplet costs cents to test and shows whether MahaRERA answers a data-centre address. Use (b) once for the first manual proof and for fixtures. Do not run the product on (b). The decision is the owner's because it spends money.</p>
+<p class="subtle">Everything else runs on our own servers or on Cloudflare as usual.</p>
+<div class="table-wrap"><table><thead><tr><th>Layer</th><th>Choice and status</th><th>Why</th><th>Cost or risk</th></tr></thead><tbody><tr><td>India fetcher</td><td>One VM with a self-hosted GitHub runner, private repo. One fetch job per state behind one interface. Not started, blocked on the decision above</td><td>Only part that must be in India</td><td>USD 4 to 6 a month. Block risk</td></tr><tr><td>Raw storage</td><td>Cloudflare R2, key raw/state/regno/date/name with SHA-256. Not started</td><td>Provenance. Any grade replays from stored filings</td><td>About 6 GB at 40,000 projects (estimate)</td></tr><tr><td>Parse and grade</td><td>TypeScript pure functions in a Worker queue consumer, also in CI and on our own servers for replay. Rule table is versioned JSON. Not started</td><td>One code path in production and tests</td><td>No model cost in the grade path</td></tr><tr><td>Database</td><td>Cloudflare D1. Not started</td><td>See trade-off 1</td><td>D1 limits not yet read</td></tr><tr><td>Public site</td><td>Workers render HTML, Cache API for pages. Not started</td><td>Edge reads for search traffic. No server to run</td><td>Cache purge on change</td></tr><tr><td>Preview images</td><td>SVG to PNG in a Worker when the grade changes, stored in R2. Not started</td><td>WhatsApp reads a ready image</td><td>Preview size limits to test</td></tr><tr><td>Email</td><td>Cloudflare email sending from a Worker. Never Resend. Not started</td><td>House default</td><td>Limits and inbox placement unverified. Milestone 0 tests five inboxes</td></tr><tr><td>Jobs and replay</td><td>Cron Triggers and Queues. Backfill and replay on our own servers via the R2 S3 API. Not started</td><td>Stock tools</td><td>None known</td></tr><tr><td>Tests</td><td>Unit and property tests in CI, Playwright against a fake portal, one real run per milestone</td><td>Replay test and monotonic test guard the grader</td><td>Fixtures need upkeep</td></tr></tbody></table></div>
+<h2>Data model</h2>
+<p class="subtle">Ids are ULIDs and times are UTC integers. The site reads public tables with a read-only binding. Writes go through one Worker.</p>
+<div class="table-wrap compact"><table><thead><tr><th>Entity</th><th>Purpose</th><th>Important fields and relationships</th><th>Access</th></tr></thead><tbody><tr><td>project, promoter</td><td>One page per project and promoter</td><td>state, regno unique, name, district, status, last_read_at. Project belongs to promoter</td><td>Public</td></tr><tr><td>fetch_run, raw_object</td><td>What was fetched and when</td><td>raw_object: project, run, r2_key, sha256, source_url, fetched_at, http_status</td><td>Metadata public, bytes private</td></tr><tr><td>filing</td><td>Parsed fact</td><td>project, raw_object, type, effective_date, payload_json, source_url, parser_version</td><td>Public</td></tr><tr><td>rule_table, grade, grade_reason, grade_unread</td><td>Replayable grade</td><td>grade: project, rules_version, letter, points, as_of, input_hash. Reason: rank, rule_id, points, filing, source_url</td><td>Public</td></tr><tr><td>change_candidate, change_event</td><td>Two-run rule and email trigger</td><td>candidate: kind, old, new, first_seen_run. Event: candidate, confirmed_at</td><td>Candidate server only, event public</td></tr><tr><td>follower, follow</td><td>Who gets email</td><td>follower: email_hash, email_enc, consent_at, unsub_token_hash. Follow: follower, project, state, last_emailed_at</td><td>Server only, encrypted</td></tr><tr><td>email_send</td><td>Send log and retries</td><td>follow, template, change_events, sent_at, attempts, status, bounce</td><td>Server only</td></tr><tr><td>correction_request</td><td>Right of reply</td><td>project, fact, evidence_url, contact_hash, opened_at, closed_at, outcome_note</td><td>Public view without contact</td></tr><tr><td>share_count, event</td><td>Metrics</td><td>Daily counts by project and source. No personal data</td><td>Aggregate public, events server only</td></tr></tbody></table></div>
+<h2>Trade-offs</h2>
+<article class="trade-off"><h3>Cloudflare D1 instead of Postgres on our own server</h3><p>Public pages are read at the edge, and D1 sits next to the Workers. Postgres on the our server outside India adds a network hop per page and one machine to keep up. The cost is D1 size and write limits, which are not yet read. <strong>Exit:</strong> D1 exports to SQL and moves to Postgres. We keep the SQL plain for that reason.</p></article>
+<article class="trade-off"><h3>No language model in the grade path</h3><p>The grader is code over parsed filings, so a grade is exact, cheap and replayable, and it cannot invent a fact. The cost is that scanned PDF orders get a link and a date and no summary. <strong>Exit:</strong> add optional extraction later behind a quote check that proves the text is in the stored page.</p></article>
+<article class="trade-off"><h3>Email only, with a two-run rule</h3><p>A change must appear in two nightly reads before anyone is emailed, so a portal glitch never sends a false alarm about a builder. The cost is up to one day of delay. <strong>Exit:</strong> a per-kind fast path for facts that are certain, such as a registration marked revoked.</p></article>
+<h2>Build plan</h2>
+<div class="table-wrap compact"><table><thead><tr><th>Milestone</th><th>Ships</th><th>Done when</th></tr></thead><tbody><tr><td>0. Reach the portals</td><td>India fetcher, terms read, field map per state, email test, D1 limits read</td><td>The owner picks the fetcher. One MahaRERA and one Haryana project load through it. Test emails reach five inboxes.</td></tr><tr><td>1. Grade one state</td><td>MahaRERA ingest, parser, grader, grade page, timeline for 200 Pune projects</td><td>Replay passes. Rule table checked by hand on 20 real projects. Ten buyer interviews logged.</td></tr><tr><td>2. Follow and email</td><td>Double opt-in, change emails, quarterly email, unfollow and delete</td><td>EM checks pass on fixtures and once on a real project.</td></tr><tr><td>3. NCR states</td><td>Haryana first, then Delhi and UP RERA as portals allow</td><td>Each state passes IN-1 to IN-5 and has one real run.</td></tr><tr><td>4. Pages at scale and sharing</td><td>Project, promoter and district pages, sitemaps, preview image, share text</td><td>A real WhatsApp preview shows for three pages. Search Console accepts the sitemaps.</td></tr><tr><td>5. Launch gate</td><td>Advocate review, data protection check, dark launch, correction log</td><td>Fewer than 2 wrong facts in 100 sampled reasons.</td></tr></tbody></table></div>
+</section>
+  </main>
+
+  <script>
+    (function () {
+      var tabs = Array.from(document.querySelectorAll('[role="tab"]'));
+      var panels = Array.from(document.querySelectorAll('[role="tabpanel"]'));
+
+      function activate(name, moveFocus, updateHash) {
+        var nextTab = tabs.find(function (tab) { return tab.dataset.panel === name; }) || tabs[0];
+        tabs.forEach(function (tab) {
+          var active = tab === nextTab;
+          tab.setAttribute("aria-selected", String(active));
+          tab.tabIndex = active ? 0 : -1;
+        });
+        panels.forEach(function (panel) {
+          var active = panel.dataset.panel === nextTab.dataset.panel;
+          panel.classList.toggle("active", active);
+          panel.hidden = !active;
+        });
+        if (moveFocus) nextTab.focus();
+        if (updateHash && history.replaceState) {
+          history.replaceState(null, "", "#" + nextTab.dataset.panel);
+        }
+        window.scrollTo({ top: 0, behavior: "auto" });
+      }
+
+      tabs.forEach(function (tab, index) {
+        tab.addEventListener("click", function () {
+          activate(tab.dataset.panel, false, true);
+        });
+        tab.addEventListener("keydown", function (event) {
+          var nextIndex = null;
+          if (event.key === "ArrowRight") nextIndex = (index + 1) % tabs.length;
+          if (event.key === "ArrowLeft") nextIndex = (index - 1 + tabs.length) % tabs.length;
+          if (event.key === "Home") nextIndex = 0;
+          if (event.key === "End") nextIndex = tabs.length - 1;
+          if (nextIndex === null) return;
+          event.preventDefault();
+          activate(tabs[nextIndex].dataset.panel, true, true);
+        });
+      });
+
+      window.addEventListener("hashchange", function () {
+        activate(location.hash.slice(1), false, false);
+      });
+      activate(location.hash.slice(1) || "product", false, false);
+
+      var themeToggle = document.getElementById("theme-toggle");
+      themeToggle.addEventListener("click", function () {
+        var current = document.documentElement.dataset.theme ||
+          (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+        var next = current === "dark" ? "light" : "dark";
+        document.documentElement.dataset.theme = next;
+        try { localStorage.setItem("spec-theme", next); } catch (error) {}
+      });
+    })();
+  </script>
+</body>
+</html>
