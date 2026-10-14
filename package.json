@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "lint": "eslint src",
+    "lint": "eslint src tests",
     "test": "tsc -p . && vitest run",
     "test:coverage": "vitest run --coverage",
     "typecheck": "tsc -p ."

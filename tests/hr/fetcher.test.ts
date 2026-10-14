@@ -10,7 +10,6 @@ const page = (name: string) => {
   return name.endsWith(".gz") ? gunzipSync(b) : b;
 };
 
-// A fake portal serving the stored pages.
 function fakePortal(pages: Record<string, { status: number; body: Buffer | string } | Error>) {
   const seen: { url: string; ua?: string }[] = [];
   const fetch: FetchLike = async (url, init) => {

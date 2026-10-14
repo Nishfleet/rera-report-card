@@ -18,7 +18,6 @@ const cd = (original: string, current: string) =>
 const checked = (id: string, input: string) => f(id, "checked", "2026-10-01", { input });
 const prog = (id: string, date: string, percent: number) => f(id, "progress", date, { percent });
 
-// A project where every input reads clean: grades 100 A.
 const base = (): Filing[] => [
   reg(),
   qpr("q", "2026-07-20", "2026-07-31", "2026-07-20"),
@@ -79,7 +78,6 @@ describe("bands and impact", () => {
   it("maps points to letters at the band edges", () => {
     const with_ = (n: number) => grade(v1, [...base(), ...Array.from({ length: n }, (_, i) => f(`e${i}`, "extension", "2026-01-01"))], ASOF);
     expect(with_(0).letter).toBe("A");
-    // a 22-point delay: 78 B
     const filings = [...base().filter((x) => x.id !== "cd"), cd("2024-01-31", "2026-06-30")];
     expect(grade(v1, filings, ASOF)).toMatchObject({ points: 78, letter: "B" });
   });
@@ -87,9 +85,9 @@ describe("bands and impact", () => {
   it("labels impact High, Medium and Low by points", () => {
     const filings = [
       ...base().filter((x) => x.id !== "cd"),
-      cd("2025-12-31", "2027-06-30"), // R6 14 High
-      f("o1", "order", "2026-06-01", { against: "project" }), // R12 6 Medium
-      f("e1", "extension", "2026-01-01"), // R8 3 Low
+      cd("2025-12-31", "2027-06-30"),
+      f("o1", "order", "2026-06-01", { against: "project" }),
+      f("e1", "extension", "2026-01-01"),
     ];
     const g = grade(v1, filings, ASOF);
     expect(g.reasons.map((r) => [r.ruleId, r.impact])).toEqual([
@@ -247,7 +245,6 @@ describe("unread inputs and withholding", () => {
       { input: "extensions", reason: "source not read" },
       { input: "complaints_orders", reason: "source not read" },
     ]);
-    // A filing of the input's own type is proof enough that the source was read.
     const withOrder = grade(v1, [...unchecked, f("o1", "order", "2026-06-01")], ASOF);
     expect(withOrder.unread.map((u) => u.input)).toEqual(["extensions"]);
   });
@@ -324,11 +321,9 @@ describe("every reason carries its source", () => {
 
 describe("dates", () => {
   it("clamps month ends and handles year turns in windows", () => {
-    // asOf 2026-03-31: 24 months back is 2024-03-31; 12 months back is 2025-03-31
     const asOf = new Date("2026-03-31");
     expect(ids([...base(), f("c", "complaint", "2024-03-31")], v1, asOf)).toContain("R9");
     expect(ids([...base(), f("c", "complaint", "2024-03-30")], v1, asOf)).not.toContain("R9");
-    // asOf 2026-02-28 minus 12 months is 2025-02-28; asOf 2024-02-29 minus 12 is 2023-02-28
     expect(ids([...base(), f("c", "complaint", "2023-02-28")], v1, new Date("2024-02-29"))).toContain("R9");
   });
 });
