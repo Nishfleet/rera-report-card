@@ -1,5 +1,3 @@
-// The 1200 x 630 preview card (PLAN.md 4.3): project name, grade letter and the top reason.
-// SVG here is the source of truth; png.ts rasterizes it for crawlers that do not read SVG.
 import type { Letter } from "../grade";
 import { BRAND, esc } from "./render";
 
@@ -11,7 +9,6 @@ export interface CardInput {
   topReason: string | null;
 }
 
-// Greedy word wrap by character count. Good enough for a fixed card at one font size.
 export function wrap(text: string, max: number, lines: number): string[] {
   const out: string[] = [];
   let line = "";

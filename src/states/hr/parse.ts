@@ -1,6 +1,3 @@
-// Haryana RERA (haryanarera.gov.in) parsers. Pure functions from page HTML to records.
-// Layouts read from the fixtures in tests/fixtures/hr, captured 13 Oct 2026.
-// Any layout we do not recognise is unreadable with a reason, never a partial guess.
 import { load, type CheerioAPI } from "cheerio";
 import type { Filing, ParseResult, ProjectRecord } from "../../ingest/types";
 
@@ -28,7 +25,6 @@ const LOCATION_HEADERS = ["Project Name", "Project Location", "Project District"
 const DETAIL_HEADERS_START = ["Project Registration Number", "Project Id", "Receiving Date", "Online Submission Date", "Current Status"];
 const HEARING_HEADERS = ["Date of Hearing", "Proceedings of the day", "Status", "Order"];
 
-// The list pages are per office. 1 is Panchkula, 2 is Gurugram (checked against the fixtures).
 export const OFFICES: Record<string, string> = { "1": "Panchkula", "2": "Gurugram" };
 
 export interface HrListRow {
@@ -40,8 +36,8 @@ export interface HrListRow {
   locality: string;
   district: string;
   registeredWith: string;
-  registeredOn: string | null; // ISO date
-  validUntil: string | null; // ISO date
+  registeredOn: string | null;
+  validUntil: string | null;
   lapsed: boolean;
   suspended: boolean;
   inAbeyance: boolean;
@@ -77,7 +73,6 @@ function iso(y: number, m: number, d: number): string | null {
   return dt.toISOString().slice(0, 10);
 }
 
-// Reads "31/12/2026", "09.10.2017", "9.1.2017" and "31-Dec-2019". Anything else is null.
 export function parseDate(text: string): string | null {
   const t = clean(text);
   let m = /^(\d{1,2})[./-](\d{1,2})[./-](\d{4})$/.exec(t);
@@ -87,7 +82,6 @@ export function parseDate(text: string): string | null {
   return null;
 }
 
-// Returns why a page cannot be read at all, or null if it looks like a normal portal page.
 export function pageProblem(html: string): string | null {
   if (clean(html) === "") return "empty page";
   const $ = load(html);
@@ -127,7 +121,6 @@ function href($: CheerioAPI, cell: Parameters<CheerioAPI>[0], pattern: RegExp): 
   return a ?? null;
 }
 
-// Splits the registration cell into the number and the notes the portal appends to it.
 export function parseRegistrationCell(text: string) {
   const t = clean(text);
   const lapsed = /lapsed project/i.test(t);
@@ -156,7 +149,6 @@ function qprStatus(text: string): HrListRow["qprStatus"] {
   return "other";
 }
 
-// Parses one office's "registered projects" list page.
 export function parseList(html: string): ParseResult<HrListRow[]> {
   const problem = pageProblem(html);
   if (problem) return { ok: false, unreadable: problem };
@@ -218,8 +210,6 @@ export function detailUrl(detailId: string): string {
   return `${BASE}/view_project/searchprojectDetail/${detailId}`;
 }
 
-// The registration filing the grader reads (input "registration").
-// Haryana marks a lapse on the list page, so the list row is the source.
 export function registrationFiling(row: HrListRow, sourceUrl: string, readOn: string): Filing | null {
   if (row.validUntil === null) return null;
   return {
@@ -236,7 +226,6 @@ export function registrationFiling(row: HrListRow, sourceUrl: string, readOn: st
   };
 }
 
-// Turns a list row into the project record. Status follows the portal's own label only.
 export function recordFromRow(row: HrListRow, sourceUrl: string): ProjectRecord {
   return {
     state: "hr",
@@ -263,7 +252,6 @@ export function recordFromRow(row: HrListRow, sourceUrl: string): ProjectRecord 
   };
 }
 
-// Parses one project detail page (view_project/searchprojectDetail/:id).
 export function parseDetail(html: string, sourceUrl: string): ParseResult<HrDetail> {
   const problem = pageProblem(html);
   if (problem) return { ok: false, unreadable: problem };
@@ -332,7 +320,5 @@ export function parseDetail(html: string, sourceUrl: string): ParseResult<HrDeta
       certificateUrl: href($, detCells, /view_certificate\//),
     },
   };
-  // Hearing outcomes are free text on this portal. We store them and grade nothing from them
-  // until we have read enough of them to map them to complaints and orders.
   return { ok: true, value: { record, hearings, filings: [] } };
 }

@@ -1,4 +1,3 @@
-// Cloudflare Worker for the public site: project page, preview card, follow flow, rule table.
 import type { InputName, RuleTable } from "../grade";
 import rulesV1 from "../../rules/v1.json";
 import { randomToken } from "./crypto";
@@ -13,19 +12,12 @@ import type { D1Like } from "./store";
 export interface Env {
   DB: D1Like;
   EMAIL: Mailer;
-  SECRET: string; // signs links, keys email encryption and hashing
-  FROM_ADDRESS: string; // a sender on a domain onboarded to Cloudflare Email Service
-  PUBLIC_ORIGIN?: string; // "https://example.in"; defaults to the request's origin
+  SECRET: string;
+  FROM_ADDRESS: string;
+  PUBLIC_ORIGIN?: string;
 }
 
 const RULE_TABLES: Record<string, RuleTable> = { v1: rulesV1 as RuleTable };
-
-const SOURCE_NAMES: Record<string, string> = {
-  hr: "Haryana RERA",
-  mh: "MahaRERA",
-  dl: "Delhi RERA",
-  up: "UP RERA",
-};
 
 function ruleInputs(version: string): Record<string, InputName> {
   const table = RULE_TABLES[version] ?? RULE_TABLES.v1;
@@ -125,7 +117,7 @@ export async function handle(req: Request, env: Env, now: () => number = () => M
     const project = await store.projectBySlug(env.DB, form.get("state") ?? "", form.get("slug") ?? "");
     if (!project) return notFound();
     const back = `/p/${project.state}/${project.slug}`;
-    if (form.get("website")) return redirect(`${back}?f=sent`); // honeypot: quietly do nothing
+    if (form.get("website")) return redirect(`${back}?f=sent`);
     const client = req.headers.get("cf-connecting-ip") ?? "unknown";
     const result = await follow.requestFollow(deps, project, form.get("email") ?? "", client);
     return redirect(`${back}?f=${result}`);
@@ -134,7 +126,6 @@ export async function handle(req: Request, env: Env, now: () => number = () => M
   if (path === "/follow/confirm") {
     const token = req.method === "POST" ? ((await formOf(req)).get("t") ?? "") : (url.searchParams.get("t") ?? "");
     if (req.method === "GET") {
-      // Only the button activates the follow, so mail scanners that open links cannot.
       return html(renderMessage(origin, "Confirm your follow", ["Press the button to start following this project."], nonce, postButton("/follow/confirm", { t: token }, "Confirm and follow")), nonce, 200, { "cache-control": "no-store" });
     }
     if (req.method === "POST") {
@@ -155,7 +146,7 @@ export async function handle(req: Request, env: Env, now: () => number = () => M
       return html(renderMessage(origin, "Unfollow this project", ["Press the button to stop emails about this project."], nonce, postButton(path, {}, "Unfollow")), nonce, 200, { "cache-control": "no-store" });
     }
     if (req.method === "POST") {
-      // Also the RFC 8058 one-click target named in List-Unsubscribe.
+      // upstream: RFC 8058 one-click unsubscribe target named in the List-Unsubscribe header. https://www.rfc-editor.org/rfc/rfc8058
       const project = await follow.unfollowByToken(deps, m[1]);
       if (!project) return html(renderMessage(origin, "This link does not work", ["Open the newest email from us and use its link."], nonce), nonce, 400);
       return html(renderMessage(origin, "You no longer follow this project", [`We will not email you about ${project.name} again.`], nonce), nonce);

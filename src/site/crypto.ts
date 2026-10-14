@@ -1,5 +1,3 @@
-// Small WebCrypto helpers. They run unchanged in Workers and in Node 22.
-
 const enc = new TextEncoder();
 
 export function b64url(bytes: Uint8Array): string {
@@ -47,8 +45,6 @@ function sameString(a: string, b: string): boolean {
   return diff === 0;
 }
 
-// A signed link token: "<payload>.<mac>". The payload is the purpose and an id, so a token
-// made for one purpose never works for another.
 export async function signToken(secret: string, purpose: string, id: string): Promise<string> {
   const payload = b64url(enc.encode(`${purpose}:${id}`));
   return `${payload}.${await hmac(secret, payload)}`;

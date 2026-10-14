@@ -1,5 +1,3 @@
-// Data access for the site, written against the part of Cloudflare D1's API we use.
-// Tests run the same SQL on node:sqlite through a small shim.
 import type { Grade } from "../grade";
 import type { ProjectStatus, StateCode } from "../ingest/types";
 
@@ -43,7 +41,6 @@ export interface FollowRow {
   confirmed_at: number | null;
 }
 
-// "GGM/415/147/2020/31" -> "ggm-415-147-2020-31", "277 OF 2017" -> "277-of-2017".
 export function slugOf(regno: string): string {
   return regno
     .toLowerCase()
@@ -95,7 +92,6 @@ export async function followByConfirmHash(db: D1Like, hash: string): Promise<Fol
   return db.prepare("SELECT * FROM follow WHERE confirm_token_hash = ?").bind(hash).first<FollowRow>();
 }
 
-// Starts or restarts a pending follow with a fresh confirmation token.
 export async function upsertPendingFollow(db: D1Like, id: string, followerId: string, projectId: string, tokenHash: string, now: number) {
   await db
     .prepare(
@@ -141,7 +137,6 @@ export async function logEmail(db: D1Like, id: string, followId: string | null, 
     .run();
 }
 
-// Counts this key's hits in the window, records one more and says whether it is within the limit.
 export async function rateLimit(db: D1Like, bucket: string, keyHash: string, limit: number, windowSec: number, now: number) {
   const row = await db
     .prepare("SELECT COUNT(*) AS n FROM rate_hit WHERE bucket = ? AND key_hash = ? AND at > ?")

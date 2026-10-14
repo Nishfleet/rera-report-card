@@ -1,5 +1,3 @@
-// Worker entry (wrangler `main`). The wasm and font imports live here, not in worker.ts,
-// so tests can import `handle` without a bundler.
 import resvgWasm from "@resvg/resvg-wasm/index_bg.wasm";
 import inter400 from "@expo-google-fonts/inter/400Regular/Inter_400Regular.ttf";
 import inter700 from "@expo-google-fonts/inter/700Bold/Inter_700Bold.ttf";
