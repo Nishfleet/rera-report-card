@@ -1,0 +1,91 @@
+# Fetches pages that only answer from Indian addresses (MahaRERA, Delhi RERA) by routing a
+# GitHub runner through the owner's Mac as a Tailscale exit node (owner's choice, 13 Oct 2026).
+# Works only while that Mac is awake and online. Manual trigger only: no pull request can run it.
+name: India capture
+
+on:
+  workflow_dispatch:
+    inputs:
+      urls:
+        description: One URL per line
+        type: string
+        default: |
+          https://maharera.maharashtra.gov.in/
+          https://maharera.maharashtra.gov.in/robots.txt
+          https://maharera.maharashtra.gov.in/projects-search-result
+          https://rera.delhi.gov.in/
+      commit:
+        description: Commit the captured pages to a capture/<run id> branch
+        type: boolean
+        default: true
+
+permissions:
+  contents: write
+
+concurrency:
+  group: india-capture
+  cancel-in-progress: false
+
+jobs:
+  capture:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Join the tailnet
+        uses: tailscale/github-action@v4
+        with:
+          oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
+          oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
+          tags: tag:ci
+
+      - name: Route through the Mac exit node
+        run: |
+          set -euo pipefail
+          tailscale exit-node list || true
+          # The tailnet has one exit node: the owner's Mac. Pick it by its tailnet IP.
+          node=$(tailscale exit-node list 2>/dev/null | awk 'NR>1 && $1 ~ /^100\./ && $0 !~ /offline/ {print $1; exit}')
+          if [ -z "$node" ]; then
+            echo "::error::No online exit node in the tailnet. Is the Mac awake, with Tailscale on and 'Run as exit node' ticked?"
+            exit 1
+          fi
+          sudo tailscale set --exit-node="$node" --exit-node-allow-lan-access
+          sleep 3
+          country=$(curl -sS --max-time 20 https://ipinfo.io/country | tr -d '[:space:]')
+          echo "Exit node $node, egress country $country"
+          echo "Egress country: $country" >> "$GITHUB_STEP_SUMMARY"
+          if [ "$country" != "IN" ]; then
+            echo "::error::Traffic does not leave from India (got $country)."
+            exit 1
+          fi
+
+      - name: Fetch URLs
+        env:
+          URLS: ${{ inputs.urls }}
+          OUT_DIR: capture
+        run: |
+          {
+            echo '### Captured pages'
+            echo
+            echo '| Slug | Status | Bytes | Final URL |'
+            echo '|---|---|---|---|'
+            printf '%s\n' "$URLS" | scripts/capture.sh
+          } | tee -a "$GITHUB_STEP_SUMMARY"
+
+      - name: Commit captures to a branch
+        if: inputs.commit
+        run: |
+          set -euo pipefail
+          branch="capture/${GITHUB_RUN_ID}"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -b "$branch"
+          mkdir -p tests/fixtures/captures
+          mv capture "tests/fixtures/captures/${GITHUB_RUN_ID}"
+          # Large pages are stored gzip so the repo stays small. sha256 in meta is of the original.
+          find "tests/fixtures/captures/${GITHUB_RUN_ID}" -name '*.html' -size +1M -exec gzip -9 -n {} \;
+          git add tests/fixtures/captures
+          git commit -m "capture: India run ${GITHUB_RUN_ID}"
+          git push origin "$branch"
+          echo "Pushed branch $branch" >> "$GITHUB_STEP_SUMMARY"
