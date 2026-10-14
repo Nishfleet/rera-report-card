@@ -1,6 +1,3 @@
-// Grader for PLAN.md section 7.4: one pure function, no clock, no I/O.
-// Dates are ISO "YYYY-MM-DD" strings. Months are calendar months, days ignored.
-
 export type Letter = "A" | "B" | "C" | "D" | "E";
 export type Impact = "High" | "Medium" | "Low";
 export type InputName =
@@ -13,8 +10,6 @@ export type InputName =
 
 export interface Filing {
   id: string;
-  // registration | qpr | extension | completion_date | complaint | order | progress | bank | unreadable | checked
-  // "checked" (payload.input) records that a source was read and listed nothing, so zero means zero.
   type: string;
   date: string;
   sourceUrl: string;
@@ -87,16 +82,12 @@ const INPUT_OF_TYPE: Record<string, InputName> = {
   progress: "progress",
 };
 
-// Inputs that must have a filing on record to count as read.
 const NEEDS_FILING: Partial<Record<InputName, string>> = {
   registration: "registration",
   qpr: "qpr",
   completion_date: "completion_date",
 };
 
-// Inputs whose usual value is "none on file". No filings proves nothing on its own:
-// the input counts as read only with a filing of its own, or a "checked" filing saying
-// the source was read and listed nothing.
 const NEEDS_CHECK: Partial<Record<InputName, string[]>> = {
   extensions: ["extension"],
   complaints_orders: ["complaint", "order"],
@@ -129,7 +120,7 @@ function newestFirst(a: Filing, b: Filing): number {
 
 interface Ctx {
   asOf: string;
-  filings: Filing[]; // usable filings, sorted oldest first
+  filings: Filing[];
   unread: Map<InputName, string>;
 }
 
@@ -193,7 +184,6 @@ const HANDLERS: Record<string, Handler> = {
     return (last.payload.percent as number) <= (previous.payload.percent as number) ? [last] : [];
   },
   registration_lapsed: (_rule, ctx) => {
-    // Without a readable extensions input, "no extension on file" is unknown.
     if (ctx.unread.has("extensions")) return [];
     const latest = ofType(ctx, "registration").sort(newestFirst)[0];
     const lapsed =
@@ -228,9 +218,6 @@ function hasSource(url: string): boolean {
   return /^https?:\/\/\S+$/.test(url);
 }
 
-// Pure and deterministic: the same inputs give the same bytes.
-// A filing with no source URL cannot be cited, so it is never graded;
-// its input is listed as unread instead.
 export function grade(rules: RuleTable, filings: Filing[], asOf: Date): Grade {
   const asOfIso = asOf.toISOString().slice(0, 10);
   const known = filings.filter((f) => f.date <= asOfIso);
@@ -318,7 +305,6 @@ export function grade(rules: RuleTable, filings: Filing[], asOf: Date): Grade {
   };
 }
 
-// A reason without a source URL does not render.
 export function renderableReasons(g: Grade): Reason[] {
   return g.reasons.filter((r) => hasSource(r.sourceUrl));
 }

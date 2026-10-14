@@ -1,5 +1,3 @@
-// HTML for the public pages (PLAN.md 4.2 to 4.4, design system in section 8).
-// Pure functions: data in, HTML string out. Every value is escaped on the way in.
 import type { Grade, InputName, Letter, Reason } from "../grade";
 import type { ProjectStatus, StateCode } from "../ingest/types";
 
@@ -28,7 +26,6 @@ const STATUS_WORDS: Record<ProjectStatus, string | null> = {
   unknown: null,
 };
 
-// What a clean input means, in plain words (section 4.2, "Checked, no effect on the grade").
 const CLEAN_WORDS: Record<InputName, string> = {
   qpr: "Quarterly reports filed on time in the last 4 quarters",
   registration: "Registration not lapsed and not revoked",
@@ -64,13 +61,11 @@ export function esc(value: unknown): string {
 
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
-// "2026-10-13" -> "13 Oct 2026"
 export function day(iso: string): string {
   const [y, m, d] = iso.split("-").map(Number);
   return `${d} ${MONTHS[m - 1]} ${y}`;
 }
 
-// Unix seconds -> "13 Oct 2026, 06:10 IST"
 export function istTime(unix: number): string {
   const t = new Date((unix + 5.5 * 3600) * 1000);
   const hh = String(t.getUTCHours()).padStart(2, "0");
@@ -85,8 +80,6 @@ export function domainOf(url: string): string {
     return url;
   }
 }
-
-// ---------- icons (outline, always beside a word) ----------
 
 const svg = (path: string, size = 20, stroke = 1.7) =>
   `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${stroke}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${path}</svg>`;
@@ -104,8 +97,6 @@ const ICONS: Record<InputName | "check" | "info" | "bell" | "share" | "search", 
   share: '<path d="M12 15V4M8 8l4-4 4 4M5 13v5.5A1.5 1.5 0 006.5 20h11a1.5 1.5 0 001.5-1.5V13"/>',
   search: '<circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/>',
 };
-
-// ---------- gauge ----------
 
 const ARCS: Record<Letter, string> = {
   E: "M26.0 126.8 A104 104 0 0 1 44.0 71.5",
@@ -136,8 +127,6 @@ export function gauge(letter: Letter | null): string {
     `<g font-size="12" font-weight="600" fill="var(--ink-2)" text-anchor="middle">${labels}</g></svg>`
   );
 }
-
-// ---------- shared layout ----------
 
 const CSS = `
 :root{--canvas:#f5f4ef;--surface:#fff;--ink:#15171c;--ink-2:#565b66;--ink-3:#8b909b;--line:#e4e2da;--line-soft:#eeece6;--chip:#eeede7;--accent:#1d4ed8;--accent-ink:#fff;--accent-wash:#e8eefc}
@@ -257,10 +246,8 @@ ${body}
 </body></html>`;
 }
 
-// ---------- project page ----------
-
 export interface ProjectView {
-  origin: string; // "https://example.in"
+  origin: string;
   state: StateCode;
   slug: string;
   regno: string;
@@ -269,9 +256,9 @@ export interface ProjectView {
   district: string;
   locality: string;
   status: ProjectStatus;
-  sourceName: string; // "Haryana RERA"
+  sourceName: string;
   sourceUrl: string;
-  readAt: number | null; // unix seconds
+  readAt: number | null;
   grade: Grade | null;
   filingsRead: number;
   ruleInputs: Record<string, InputName>;
@@ -290,7 +277,6 @@ export function sortedReasons(g: Grade): Reason[] {
     .sort((a, b) => b.points - a.points || (a.filingDate < b.filingDate ? 1 : a.filingDate > b.filingDate ? -1 : 0));
 }
 
-// The one line used for WhatsApp text, og:description and the page summary.
 export function shareLine(v: ProjectView): string {
   const g = v.grade;
   if (!g || g.letter === null) return `${v.name}: grade not available yet.`;
@@ -356,7 +342,7 @@ export function renderProject(v: ProjectView, nonce: string): string {
 <dl class="stats"><div><dt>${reasons.length}</dt><dd>reasons</dd></div><div><dt>${v.filingsRead}</dt><dd>filings read</dd></div><div><dt>${esc(g?.rulesVersion ?? "v1")}</dt><dd>rule table</dd></div></dl>
 <p class="small center">${GRADE_NOTE}</p></section>`;
 
-  let why = "";
+  let why: string;
   if (letter && g) {
     why = `<h2 class="label head2">Why it is ${letter === "A" || letter === "E" ? "an" : "a"} ${letter} <span class="asof">as of ${esc(day(g.asOf))}</span></h2>`;
     why += top.length
@@ -435,7 +421,6 @@ ${followDock(v, nonce)}`;
   );
 }
 
-// A one-paragraph answer to "what is this project's RERA record", for readers and answer engines.
 export function summary(v: ProjectView): string {
   const g = v.grade;
   const where = `${v.name} is a project by ${v.promoter} in ${v.locality}, registered with ${v.sourceName} as ${v.regno}.`;
@@ -452,8 +437,6 @@ const sentence = (s: string) => {
   return t ? `${t[0].toUpperCase()}${t.slice(1)}${/[.!?]$/.test(t) ? "" : "."}` : "";
 };
 const titleCase = (s: string) => s.toLowerCase().replace(/\b[a-z]/g, (c) => c.toUpperCase());
-
-// ---------- small message pages ----------
 
 export function renderMessage(origin: string, title: string, paragraphs: string[], nonce: string, action?: string): string {
   return layout(

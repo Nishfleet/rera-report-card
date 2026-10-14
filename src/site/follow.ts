@@ -1,4 +1,3 @@
-// Follow by email with double opt-in (PLAN.md 4.4 and 4.10). No account, no password.
 import { decrypt, encrypt, hmac, newId, randomToken, sha256, signToken, verifyToken } from "./crypto";
 import { confirmEmail, type Mailer } from "./email";
 import * as store from "./store";
@@ -14,7 +13,7 @@ export interface Deps {
   secret: string;
   from: string;
   origin: string;
-  now: () => number; // unix seconds
+  now: () => number;
 }
 
 export function normaliseEmail(raw: string): string | null {
@@ -30,8 +29,6 @@ export const unfollowUrl = async (d: Deps, followId: string) => `${d.origin}/u/$
 
 export type FollowRequestResult = "sent" | "invalid" | "limited";
 
-// Always answers "sent" for a valid address, whether or not it already follows,
-// so the form cannot be used to learn who follows what.
 export async function requestFollow(d: Deps, project: ProjectRow, rawEmail: string, clientKey: string): Promise<FollowRequestResult> {
   const email = normaliseEmail(rawEmail);
   if (!email) return "invalid";

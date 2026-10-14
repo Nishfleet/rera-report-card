@@ -1,4 +1,3 @@
-// Email messages (PLAN.md 4.4, 4.5, 4.10). Plain words, one button, an unfollow link in every email.
 import { BRAND, esc } from "./render";
 
 export interface OutgoingEmail {
@@ -10,7 +9,6 @@ export interface OutgoingEmail {
   headers: Record<string, string>;
 }
 
-// The part of Cloudflare Email Service's `send_email` binding we use.
 export interface Mailer {
   send(message: { to: string; from: string; subject: string; text: string; html: string; headers?: Record<string, string> }): Promise<unknown>;
 }
@@ -51,8 +49,6 @@ export function confirmEmail(p: {
   };
 }
 
-// Change and quarterly emails share this frame. List-Unsubscribe makes unfollow one click
-// in mail apps that support RFC 8058.
 export function followerEmail(p: {
   to: string;
   from: string;
@@ -75,6 +71,7 @@ export function followerEmail(p: {
       `<a href="${esc(p.unfollowUrl)}" style="color:#565b66">Unfollow this project</a> · <a href="${esc(p.manageUrl)}" style="color:#565b66">Manage your follows</a>`,
     ),
     headers: {
+      // upstream: RFC 8058 one-click unsubscribe; mail apps act on the List-Unsubscribe header. https://www.rfc-editor.org/rfc/rfc8058
       "List-Unsubscribe": `<${p.unfollowUrl}>`,
       "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
     },

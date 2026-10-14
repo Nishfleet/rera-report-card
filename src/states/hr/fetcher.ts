@@ -1,5 +1,3 @@
-// Haryana fetcher (PLAN.md 7.2). Loads raw pages and never parses project content;
-// it only reads the list page enough to know which detail pages to load.
 import type { ProjectRef, RawBundle, RawFile, StateFetcher } from "../../ingest/types";
 import { BASE, OFFICES, detailUrl, pageProblem, parseList } from "./parse";
 
@@ -34,7 +32,6 @@ export class HaryanaFetcher implements StateFetcher {
   readonly state = "hr" as const;
   constructor(private readonly opts: HaryanaFetcherOptions = {}) {}
 
-  // The cursor is the office id. One call reads one office's whole list.
   async listProjects(cursor: string | null) {
     const offices = Object.keys(OFFICES);
     const office = cursor ?? offices[0];
