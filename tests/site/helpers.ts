@@ -5,7 +5,6 @@ import type { Mailer } from "../../src/site/email";
 import type { D1Like } from "../../src/site/store";
 import type { Env } from "../../src/site/worker";
 
-// The D1 calls we use, on node:sqlite, so tests run the real schema and SQL.
 export function memoryD1(): D1Like & { raw: DatabaseSync } {
   const raw = new DatabaseSync(":memory:");
   raw.exec("PRAGMA foreign_keys = ON");
@@ -50,7 +49,6 @@ export function fakeMailer() {
 
 export const rules: RuleTable = JSON.parse(readFileSync(new URL("../../rules/v1.json", import.meta.url), "utf8"));
 
-// Fictional project and filings. Never a real registration number with an invented grade.
 export const SAMPLE = {
   id: "proj-sample",
   state: "hr",
@@ -63,7 +61,7 @@ export const SAMPLE = {
   status: "under_construction",
   source_url: "https://example.test/sample/project",
   source_name: "Haryana RERA",
-  last_read_at: 1791872400, // 13 Oct 2026, 11:50 IST
+  last_read_at: 1791872400,
 };
 
 export function sampleFilings(): Filing[] {
