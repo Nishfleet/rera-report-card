@@ -5,6 +5,7 @@ import { randomToken } from "./crypto";
 import type { Mailer } from "./email";
 import * as follow from "./follow";
 import { cardSvg } from "./og";
+import type { Rasterizer } from "./png";
 import { BRAND, day, postButton, renderManage, renderMessage, renderProject, sortedReasons, type ProjectView } from "./render";
 import * as store from "./store";
 import type { D1Like } from "./store";
@@ -57,7 +58,7 @@ async function formOf(req: Request): Promise<URLSearchParams> {
   return new URLSearchParams(await req.text());
 }
 
-export async function handle(req: Request, env: Env, now: () => number = () => Math.floor(Date.now() / 1000)): Promise<Response> {
+export async function handle(req: Request, env: Env, now: () => number = () => Math.floor(Date.now() / 1000), png?: Rasterizer): Promise<Response> {
   const url = new URL(req.url);
   const origin = env.PUBLIC_ORIGIN ?? url.origin;
   const nonce = randomToken(16);
@@ -101,7 +102,7 @@ export async function handle(req: Request, env: Env, now: () => number = () => M
     return html(renderProject(view, nonce), nonce, 200, { "cache-control": f ? "no-store" : "public, max-age=300" });
   }
 
-  if (req.method === "GET" && (m = /^\/og\/([a-z]{2})\/([a-z0-9-]+)\.svg$/.exec(path))) {
+  if (req.method === "GET" && (m = /^\/og\/([a-z]{2})\/([a-z0-9-]+)\.(svg|png)$/.exec(path))) {
     const project = await store.projectBySlug(env.DB, m[1], m[2]);
     if (!project) return new Response("Not found", { status: 404 });
     const g = await store.latestGrade(env.DB, project.id);
@@ -113,7 +114,10 @@ export async function handle(req: Request, env: Env, now: () => number = () => M
       letter: g?.grade.letter ?? null,
       topReason: top ? `${top.title}, ${day(top.filingDate)}` : null,
     });
-    return new Response(svg, { headers: { "content-type": "image/svg+xml; charset=utf-8", "cache-control": "public, max-age=3600" } });
+    const cache = { "cache-control": "public, max-age=3600" };
+    if (m[3] === "svg") return new Response(svg, { headers: { "content-type": "image/svg+xml; charset=utf-8", ...cache } });
+    if (!png) throw new Error("PNG card requested but no rasterizer was passed to handle()");
+    return new Response(new Uint8Array(await png(svg)), { headers: { "content-type": "image/png", ...cache } });
   }
 
   if (req.method === "POST" && path === "/api/follow") {
@@ -185,7 +189,3 @@ export async function handle(req: Request, env: Env, now: () => number = () => M
 
   return notFound();
 }
-
-export default {
-  fetch: (req: Request, env: Env) => handle(req, env),
-};

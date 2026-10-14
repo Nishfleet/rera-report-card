@@ -1,8 +1,14 @@
 # Public site Worker. Not deployed yet: it needs a Cloudflare account, a domain on
 # Cloudflare DNS onboarded to Email Service, and a D1 database (see README).
 name = "rera-report-card"
-main = "src/site/worker.ts"
+main = "src/site/entry.ts"
 compatibility_date = "2026-10-01"
+
+# The card PNG is drawn with fonts bundled as binary data.
+[[rules]]
+type = "Data"
+globs = ["**/*.ttf"]
+fallthrough = true
 
 [[d1_databases]]
 binding = "DB"

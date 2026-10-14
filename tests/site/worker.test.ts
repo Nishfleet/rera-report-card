@@ -1,18 +1,25 @@
 import { describe, expect, it } from "vitest";
 import { handle } from "../../src/site/worker";
 import { CONFIRM_TTL_SEC } from "../../src/site/follow";
+import { readFileSync } from "node:fs";
+import { makeRasterizer } from "../../src/site/png";
 import { env, memoryD1, sampleFilings, seed, SAMPLE } from "./helpers";
 
 const ORIGIN = "https://example.test";
 const PAGE = `${ORIGIN}/p/hr/${SAMPLE.slug}`;
 const T0 = 1791900000;
 
+const rasterizer = makeRasterizer({
+  wasm: readFileSync("node_modules/@resvg/resvg-wasm/index_bg.wasm"),
+  fonts: ["400Regular/Inter_400Regular", "700Bold/Inter_700Bold"].map((f) => readFileSync(`node_modules/@expo-google-fonts/inter/${f}.ttf`)),
+});
+
 function setup(filings = sampleFilings()) {
   const e = env();
   seed(e.DB, filings);
   let now = T0;
   const call = (path: string, init?: RequestInit & { ip?: string }) =>
-    handle(new Request(`${ORIGIN}${path}`, { ...init, headers: { "cf-connecting-ip": init?.ip ?? "203.0.113.7", ...(init?.headers ?? {}) } }), e, () => now);
+    handle(new Request(`${ORIGIN}${path}`, { ...init, headers: { "cf-connecting-ip": init?.ip ?? "203.0.113.7", ...(init?.headers ?? {}) } }), e, () => now, rasterizer);
   const post = (path: string, fields: Record<string, string>, ip?: string) =>
     call(path, {
       method: "POST",
@@ -114,6 +121,18 @@ describe("project page", () => {
     const rules = await (await call("/rules/v1")).json();
     expect(rules.version).toBe("v1");
     expect((await call("/rules/v9")).status).toBe(404);
+  });
+
+  it("serves the preview card as a 1200 x 630 PNG that crawlers can read, and points og:image at it", async () => {
+    const { call } = setup();
+    const card = await call(`/og/hr/${SAMPLE.slug}.png`);
+    expect(card.headers.get("content-type")).toBe("image/png");
+    const png = Buffer.from(await card.arrayBuffer());
+    expect(png.subarray(0, 8).toString("hex")).toBe("89504e470d0a1a0a");
+    expect([png.readUInt32BE(16), png.readUInt32BE(20)]).toEqual([1200, 630]);
+    expect((await call("/og/hr/nope.png")).status).toBe(404);
+    const html = await (await call(`/p/hr/${SAMPLE.slug}`)).text();
+    expect(html).toContain(`property="og:image" content="${ORIGIN}/og/hr/${SAMPLE.slug}.png"`);
   });
 
   it("links a WhatsApp share with one line naming the grade and the top reason", async () => {
