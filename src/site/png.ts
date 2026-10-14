@@ -11,16 +11,24 @@ export interface RasterAssets {
 export function makeRasterizer(assets: RasterAssets): Rasterizer {
   let ready: Promise<void> | undefined;
   return async (svg) => {
-    ready ??= initWasm(assets.wasm);
+    ready ??= initWasm(assets.wasm).catch((e) => {
+      ready = undefined; // a failed init must not poison the isolate
+      throw e;
+    });
     await ready;
     const resvg = new Resvg(svg, {
       fitTo: { mode: "width", value: 1200 },
       font: { fontBuffers: assets.fonts, defaultFontFamily: "Inter", loadSystemFonts: false },
     });
-    const image = resvg.render();
-    const png = image.asPng();
-    image.free();
-    resvg.free();
-    return png;
+    try {
+      const image = resvg.render();
+      try {
+        return image.asPng();
+      } finally {
+        image.free();
+      }
+    } finally {
+      resvg.free();
+    }
   };
 }

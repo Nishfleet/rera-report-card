@@ -130,6 +130,7 @@ describe("project page", () => {
     const png = Buffer.from(await card.arrayBuffer());
     expect(png.subarray(0, 8).toString("hex")).toBe("89504e470d0a1a0a");
     expect([png.readUInt32BE(16), png.readUInt32BE(20)]).toEqual([1200, 630]);
+    expect(png.length).toBeGreaterThan(15_000); // text drawn: a card with no glyphs is a few KB
     expect((await call("/og/hr/nope.png")).status).toBe(404);
     const html = await (await call(`/p/hr/${SAMPLE.slug}`)).text();
     expect(html).toContain(`property="og:image" content="${ORIGIN}/og/hr/${SAMPLE.slug}.png"`);
