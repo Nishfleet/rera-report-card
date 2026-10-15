@@ -5,7 +5,7 @@ import type { Mailer } from "./email";
 import * as follow from "./follow";
 import { cardSvg } from "./og";
 import type { Rasterizer } from "./png";
-import { BRAND, day, postButton, renderManage, renderMessage, renderProject, sortedReasons, type ProjectView } from "./render";
+import { BRAND, day, esc, postButton, renderManage, renderMessage, renderProject, sortedReasons, type ProjectView } from "./render";
 import * as store from "./store";
 import type { D1Like } from "./store";
 
@@ -137,7 +137,7 @@ export async function handle(req: Request, env: Env, now: () => number = () => M
       const r = await follow.confirmFollow(deps, token);
       if (r.kind === "followed") {
         return html(
-          renderMessage(origin, "You follow this project", [`We will email you when the record of ${r.project.name} changes, and once each quarter.`], nonce, `<p><a href="/p/${r.project.state}/${r.project.slug}">Back to ${r.project.name}</a> · <a href="/">Follow another project</a></p>`),
+          renderMessage(origin, "You follow this project", [`We will email you when the record of ${r.project.name} changes, and once each quarter.`], nonce, `<p><a href="/p/${esc(r.project.state)}/${esc(r.project.slug)}">Back to ${esc(r.project.name)}</a> · <a href="/">Follow another project</a></p>`),
           nonce,
         );
       }

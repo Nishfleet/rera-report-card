@@ -199,6 +199,16 @@ describe("follow by email", () => {
     expect(again.status).toBe(400);
   });
 
+  it("escapes the project name on the confirmed page", async () => {
+    const s = setup();
+    s.e.DB.raw.prepare("UPDATE project SET name = ?").run(`<img src=x onerror=alert(1)> "Heights"`);
+    await follow(s);
+    const done = await s.post("/follow/confirm", { t: confirmLink(s) });
+    const html = await done.text();
+    expect(html).not.toContain("<img src=x");
+    expect(html).toContain("Back to &lt;img src=x onerror=alert(1)&gt; &quot;Heights&quot;</a>");
+  });
+
   it("shows the sent state on the page", async () => {
     const s = setup();
     const html = await (await s.call(`/p/hr/${SAMPLE.slug}?f=sent`)).text();
