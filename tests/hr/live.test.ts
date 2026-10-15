@@ -2,8 +2,6 @@ import { describe, expect, it } from "vitest";
 import { HaryanaFetcher } from "../../src/states/hr/fetcher";
 import { detailUrl, parseDetail } from "../../src/states/hr/parse";
 
-// Reach proof against the real portal. CI runs it with LIVE_FETCH=1 on a GitHub runner,
-// which reaches haryanarera.gov.in. Skipped everywhere else.
 describe.skipIf(!process.env.LIVE_FETCH)("live Haryana fetch", () => {
   it("reads the Gurugram list and one detail page", async () => {
     const f = new HaryanaFetcher();

@@ -35,7 +35,7 @@ export default tseslint.config(
   },
 
   {
-    files: ["src/**/*.ts"],
+    files: ["src/**/*.ts", "tests/**/*.ts"],
     plugins: { "no-comments": noComments },
     rules: {
       "no-comments/disallowComments": ["error", { allow: ["eslint", "global", "upstream:"] }],

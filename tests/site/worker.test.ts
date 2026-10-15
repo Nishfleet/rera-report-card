@@ -53,7 +53,6 @@ describe("project page", () => {
     expect(html).toContain('aria-label="Grade C on a scale from E to A"');
     expect(t).toContain("Mixed record");
     expect(t).toContain("Why it is a C");
-    // Largest reason first, each with its source link and impact.
     expect(t.indexOf("Completion date moved")).toBeLessThan(t.indexOf("Quarterly report not filed"));
     expect(html).toContain('href="https://example.test/sample/cd1"');
     expect(t).toContain("High impact");
@@ -166,14 +165,13 @@ describe("follow by email", () => {
     expect(mail.subject).toBe("Confirm: follow Example Heights, Phase 2");
     expect(followState(s)).toBe("pending");
 
-    // The address is stored encrypted, never in plain text.
     const row = s.e.DB.raw.prepare("SELECT * FROM follower").get() as Record<string, string>;
     expect(JSON.stringify(row)).not.toContain("buyer@example.com");
 
     const token = confirmLink(s);
     const page = await s.call(`/follow/confirm?t=${token}`);
     expect(text(await page.text())).toContain("Confirm and follow");
-    expect(followState(s)).toBe("pending"); // opening the link alone does nothing
+    expect(followState(s)).toBe("pending");
 
     const done = await s.post("/follow/confirm", { t: token });
     expect(text(await done.text())).toContain("You follow this project");
