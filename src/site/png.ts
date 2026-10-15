@@ -7,14 +7,20 @@ export interface RasterAssets {
   fonts: Uint8Array[];
 }
 
+let wasmReady: Promise<void> | undefined;
+
+function ensureWasm(wasm: RasterAssets["wasm"]): Promise<void> {
+  wasmReady ??= initWasm(wasm).catch((e) => {
+    if (/already initialized/i.test(String(e))) return;
+    wasmReady = undefined;
+    throw e;
+  });
+  return wasmReady;
+}
+
 export function makeRasterizer(assets: RasterAssets): Rasterizer {
-  let ready: Promise<void> | undefined;
   return async (svg) => {
-    ready ??= initWasm(assets.wasm).catch((e) => {
-      ready = undefined;
-      throw e;
-    });
-    await ready;
+    await ensureWasm(assets.wasm);
     const resvg = new Resvg(svg, {
       fitTo: { mode: "width", value: 1200 },
       font: { fontBuffers: assets.fonts, defaultFontFamily: "Inter", loadSystemFonts: false },

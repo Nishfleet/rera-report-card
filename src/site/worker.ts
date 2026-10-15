@@ -107,9 +107,14 @@ export async function handle(req: Request, env: Env, now: () => number = () => M
       topReason: top ? `${top.title}, ${day(top.filingDate)}` : null,
     });
     const cache = { "cache-control": "public, max-age=3600" };
-    if (m[3] === "svg") return new Response(svg, { headers: { "content-type": "image/svg+xml; charset=utf-8", ...cache } });
-    if (!png) throw new Error("PNG card requested but no rasterizer was passed to handle()");
-    return new Response(new Uint8Array(await png(svg)), { headers: { "content-type": "image/png", ...cache } });
+    const asSvg = (headers: Record<string, string>) => new Response(svg, { headers: { "content-type": "image/svg+xml; charset=utf-8", ...headers } });
+    if (m[3] === "svg") return asSvg(cache);
+    if (!png) return asSvg({ "cache-control": "no-store" });
+    try {
+      return new Response(new Uint8Array(await png(svg)), { headers: { "content-type": "image/png", ...cache } });
+    } catch {
+      return asSvg({ "cache-control": "no-store" });
+    }
   }
 
   if (req.method === "POST" && path === "/api/follow") {

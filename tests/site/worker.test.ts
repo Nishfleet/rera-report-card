@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { handle } from "../../src/site/worker";
 import { CONFIRM_TTL_SEC } from "../../src/site/follow";
 import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 import { makeRasterizer } from "../../src/site/png";
 import { env, memoryD1, sampleFilings, seed, SAMPLE } from "./helpers";
 
@@ -9,9 +10,11 @@ const ORIGIN = "https://example.test";
 const PAGE = `${ORIGIN}/p/hr/${SAMPLE.slug}`;
 const T0 = 1791900000;
 
+const modulePath = (rel: string) => fileURLToPath(new URL(`../../node_modules/${rel}`, import.meta.url));
+
 const rasterizer = makeRasterizer({
-  wasm: readFileSync("node_modules/@resvg/resvg-wasm/index_bg.wasm"),
-  fonts: ["400Regular/Inter_400Regular", "700Bold/Inter_700Bold"].map((f) => readFileSync(`node_modules/@expo-google-fonts/inter/${f}.ttf`)),
+  wasm: readFileSync(modulePath("@resvg/resvg-wasm/index_bg.wasm")),
+  fonts: ["400Regular/Inter_400Regular", "700Bold/Inter_700Bold"].map((f) => readFileSync(modulePath(`@expo-google-fonts/inter/${f}.ttf`))),
 });
 
 function setup(filings = sampleFilings()) {
@@ -129,10 +132,25 @@ describe("project page", () => {
     const png = Buffer.from(await card.arrayBuffer());
     expect(png.subarray(0, 8).toString("hex")).toBe("89504e470d0a1a0a");
     expect([png.readUInt32BE(16), png.readUInt32BE(20)]).toEqual([1200, 630]);
-    expect(png.length).toBeGreaterThan(15_000); // text drawn: a card with no glyphs is a few KB
+    expect(png.length).toBeGreaterThan(15_000);
     expect((await call("/og/hr/nope.png")).status).toBe(404);
     const html = await (await call(`/p/hr/${SAMPLE.slug}`)).text();
     expect(html).toContain(`property="og:image" content="${ORIGIN}/og/hr/${SAMPLE.slug}.png"`);
+  });
+
+  it("falls back to the SVG card, uncached, when the PNG cannot be drawn", async () => {
+    const e = env();
+    seed(e.DB, sampleFilings());
+    const req = () => new Request(`${ORIGIN}/og/hr/${SAMPLE.slug}.png`);
+    const broken = await handle(req(), e, () => T0, async () => {
+      throw new Error("wasm failed");
+    });
+    expect(broken.status).toBe(200);
+    expect(broken.headers.get("content-type")).toContain("image/svg+xml");
+    expect(broken.headers.get("cache-control")).toBe("no-store");
+    const bare = await handle(req(), e, () => T0);
+    expect(bare.status).toBe(200);
+    expect(bare.headers.get("content-type")).toContain("image/svg+xml");
   });
 
   it("links a WhatsApp share with one line naming the grade and the top reason", async () => {
