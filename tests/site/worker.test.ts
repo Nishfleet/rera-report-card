@@ -1,18 +1,28 @@
 import { describe, expect, it } from "vitest";
 import { handle } from "../../src/site/worker";
 import { CONFIRM_TTL_SEC } from "../../src/site/follow";
+import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
+import { makeRasterizer } from "../../src/site/png";
 import { env, memoryD1, sampleFilings, seed, SAMPLE } from "./helpers";
 
 const ORIGIN = "https://example.test";
 const PAGE = `${ORIGIN}/p/hr/${SAMPLE.slug}`;
 const T0 = 1791900000;
 
+const modulePath = (rel: string) => fileURLToPath(new URL(`../../node_modules/${rel}`, import.meta.url));
+
+const rasterizer = makeRasterizer({
+  wasm: readFileSync(modulePath("@resvg/resvg-wasm/index_bg.wasm")),
+  fonts: ["400Regular/Inter_400Regular", "700Bold/Inter_700Bold"].map((f) => readFileSync(modulePath(`@expo-google-fonts/inter/${f}.ttf`))),
+});
+
 function setup(filings = sampleFilings()) {
   const e = env();
   seed(e.DB, filings);
   let now = T0;
   const call = (path: string, init?: RequestInit & { ip?: string }) =>
-    handle(new Request(`${ORIGIN}${path}`, { ...init, headers: { "cf-connecting-ip": init?.ip ?? "203.0.113.7", ...(init?.headers ?? {}) } }), e, () => now);
+    handle(new Request(`${ORIGIN}${path}`, { ...init, headers: { "cf-connecting-ip": init?.ip ?? "203.0.113.7", ...(init?.headers ?? {}) } }), e, () => now, rasterizer);
   const post = (path: string, fields: Record<string, string>, ip?: string) =>
     call(path, {
       method: "POST",
@@ -113,6 +123,34 @@ describe("project page", () => {
     const rules = await (await call("/rules/v1")).json();
     expect(rules.version).toBe("v1");
     expect((await call("/rules/v9")).status).toBe(404);
+  });
+
+  it("serves the preview card as a 1200 x 630 PNG that crawlers can read, and points og:image at it", async () => {
+    const { call } = setup();
+    const card = await call(`/og/hr/${SAMPLE.slug}.png`);
+    expect(card.headers.get("content-type")).toBe("image/png");
+    const png = Buffer.from(await card.arrayBuffer());
+    expect(png.subarray(0, 8).toString("hex")).toBe("89504e470d0a1a0a");
+    expect([png.readUInt32BE(16), png.readUInt32BE(20)]).toEqual([1200, 630]);
+    expect(png.length).toBeGreaterThan(15_000);
+    expect((await call("/og/hr/nope.png")).status).toBe(404);
+    const html = await (await call(`/p/hr/${SAMPLE.slug}`)).text();
+    expect(html).toContain(`property="og:image" content="${ORIGIN}/og/hr/${SAMPLE.slug}.png"`);
+  });
+
+  it("falls back to the SVG card, uncached, when the PNG cannot be drawn", async () => {
+    const e = env();
+    seed(e.DB, sampleFilings());
+    const req = () => new Request(`${ORIGIN}/og/hr/${SAMPLE.slug}.png`);
+    const broken = await handle(req(), e, () => T0, async () => {
+      throw new Error("wasm failed");
+    });
+    expect(broken.status).toBe(200);
+    expect(broken.headers.get("content-type")).toContain("image/svg+xml");
+    expect(broken.headers.get("cache-control")).toBe("no-store");
+    const bare = await handle(req(), e, () => T0);
+    expect(bare.status).toBe(200);
+    expect(bare.headers.get("content-type")).toContain("image/svg+xml");
   });
 
   it("links a WhatsApp share with one line naming the grade and the top reason", async () => {

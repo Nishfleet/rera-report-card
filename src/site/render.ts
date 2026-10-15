@@ -397,7 +397,7 @@ ${followDock(v, nonce)}`;
       title: letter ? `${v.name}: RERA grade ${letter} | ${BRAND}` : `${v.name}: RERA record | ${BRAND}`,
       description: `${summary(v)} ${letter ? "Every reason cites the public filing it came from." : ""}`.trim(),
       canonical: url,
-      image: `${v.origin}/og/${v.state}/${v.slug}.svg`,
+      image: `${v.origin}/og/${v.state}/${v.slug}.png`,
       noindex: !letter || v.sample === true,
       jsonLd: [
         {
