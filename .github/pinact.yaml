@@ -6,7 +6,7 @@ ignore_actions:
   # that serves agent jobs allows only fleet-ops workflows called at main, so a SHA pin
   # would leave those jobs queued.
   - name: Nishfleet/fleet-ops/.*
-    ref: .*
+    ref: main
   # docker:// refs are digest-pinned already and are not GitHub refs.
   - name: docker://.*
     ref: .*
