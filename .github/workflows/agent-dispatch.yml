@@ -25,6 +25,9 @@ on:
     types: [completed]
   schedule:
     - cron: '17 */6 * * *'
+# Read-only default; the dispatch job widens it below.
+permissions:
+  contents: read
 # One running and one pending run per PR and PR action; GitHub replaces the
 # pending run, so a burst of pushes or labels cannot fan out. A new push
 # cancels the run for the push before it, since only the latest head matters.
