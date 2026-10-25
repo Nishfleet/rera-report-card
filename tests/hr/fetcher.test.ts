@@ -108,6 +108,33 @@ describe("getPage retries", () => {
     expect(calls()).toBe(1);
   });
 
+  it("retries a body read that breaks mid-transfer", async () => {
+    let calls = 0;
+    const waits: number[] = [];
+    const sleep = async (ms: number) => void waits.push(ms);
+    const fetch: FetchLike = async () => {
+      calls++;
+      if (calls < 3) throw new TypeError("terminated");
+      return { status: 200, arrayBuffer: async () => new Uint8Array([1]).buffer };
+    };
+    const res = await getPage(listUrl("1"), { fetch, attempts: 3, retryDelayMs: 30_000, sleep });
+    expect(res.httpStatus).toBe(200);
+    expect(calls).toBe(3);
+    expect(waits).toEqual([30_000, 30_000]);
+  });
+
+  it("does not retry an HTTP error status", async () => {
+    let calls = 0;
+    const sleep = async () => {};
+    const fetch: FetchLike = async () => {
+      calls++;
+      return { status: 503, arrayBuffer: async () => new ArrayBuffer(0) };
+    };
+    const res = await getPage(listUrl("1"), { fetch, attempts: 3, sleep });
+    expect(res.httpStatus).toBe(503);
+    expect(calls).toBe(1);
+  });
+
   it("passes the retry options from HaryanaFetcher to getPage", async () => {
     const { fetch, calls } = flaky(2);
     const sleep = async () => {};
@@ -145,7 +172,7 @@ describe("live retry policy", () => {
   const LIVE_PAGES = 2;
   const LIVE_JOB_BUDGET_MS = 600_000;
 
-  it("retries three times, 30 s apart", () => {
+  it("attempts the live fetch 3 times, 30 s apart", () => {
     expect(LIVE_ATTEMPTS).toBe(3);
     expect(LIVE_RETRY_DELAY_MS).toBe(30_000);
   });
