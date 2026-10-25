@@ -107,4 +107,13 @@ describe("getPage retries", () => {
     await expect(getPage(listUrl("1"), { fetch })).rejects.toThrow(/connect timeout/);
     expect(calls()).toBe(1);
   });
+
+  it("passes the retry options from HaryanaFetcher to getPage", async () => {
+    const { fetch, calls } = flaky(2);
+    const sleep = async () => {};
+    const f = new HaryanaFetcher({ fetch, attempts: 3, sleep, now });
+    const b = await f.fetchProject({ regno: "277 OF 2017", fetchKey: "1129" });
+    expect(calls()).toBe(3);
+    expect(b.files).toHaveLength(1);
+  });
 });
