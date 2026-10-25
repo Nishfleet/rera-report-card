@@ -77,8 +77,29 @@ jobs:
           LIVE_FETCH: "1"
         run: npx vitest run tests/hr/live.test.ts
 
+  lint:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - name: Detect package.json
+        id: detect
+        run: |
+          if [ -f package.json ]; then echo "has=true" >> "$GITHUB_OUTPUT"; else echo "No package.json yet, skipping lint"; fi
+      - if: steps.detect.outputs.has == 'true'
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 22
+          cache: npm
+      - if: steps.detect.outputs.has == 'true'
+        run: npm ci
+      - if: steps.detect.outputs.has == 'true'
+        run: npm run lint
+
   ci-ok:
-    needs: [test, live-fetch]
+    needs: [test, live-fetch, lint]
     if: always()
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -87,10 +108,12 @@ jobs:
         env:
           TEST: ${{ needs.test.result }}
           LIVE: ${{ needs.live-fetch.result }}
+          LINT: ${{ needs.lint.result }}
         run: |
-          echo "test=$TEST live-fetch=$LIVE"
+          echo "test=$TEST live-fetch=$LIVE lint=$LINT"
           # A portal that does not answer skips the proof. A portal that
           # answers and breaks the parse still fails the build, so the proof
           # keeps its teeth.
           [ "$LIVE" = success ] || [ "$LIVE" = skipped ] || exit 1
           [ "$TEST" = success ] || [ "$TEST" = skipped ] || exit 1
+          [ "$LINT" = success ] || [ "$LINT" = skipped ] || exit 1
