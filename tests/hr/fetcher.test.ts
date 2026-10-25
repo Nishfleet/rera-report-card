@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { gunzipSync } from "node:zlib";
 import { describe, expect, it } from "vitest";
-import { HaryanaFetcher, listUrl, USER_AGENT, type FetchLike } from "../../src/states/hr/fetcher";
+import { getPage, HaryanaFetcher, listUrl, LIVE_ATTEMPTS, LIVE_RETRY_DELAY_MS, LIVE_TIMEOUT_MS, USER_AGENT, type FetchLike } from "../../src/states/hr/fetcher";
 import { detailUrl } from "../../src/states/hr/parse";
 
 const dir = new URL("../fixtures/hr/", import.meta.url);
@@ -70,5 +70,88 @@ describe("HaryanaFetcher", () => {
       reason: "fetch failed: timeout",
       files: [],
     });
+  });
+});
+
+describe("getPage retries", () => {
+  const ok = { status: 200, arrayBuffer: async () => new ArrayBuffer(0) };
+  const flaky = (failures: number) => {
+    let calls = 0;
+    const fetch: FetchLike = async () => {
+      calls++;
+      if (calls <= failures) throw new Error("connect timeout");
+      return ok;
+    };
+    return { fetch, calls: () => calls };
+  };
+
+  it("attempts a timed-out fetch 3 times, waiting 30 s between attempts", async () => {
+    const { fetch, calls } = flaky(2);
+    const waits: number[] = [];
+    const sleep = async (ms: number) => void waits.push(ms);
+    const res = await getPage(listUrl("1"), { fetch, attempts: 3, retryDelayMs: 30_000, sleep });
+    expect(res.httpStatus).toBe(200);
+    expect(calls()).toBe(3);
+    expect(waits).toEqual([30_000, 30_000]);
+  });
+
+  it("still fails when all 3 attempts fail", async () => {
+    const { fetch, calls } = flaky(3);
+    const sleep = async () => {};
+    await expect(getPage(listUrl("1"), { fetch, attempts: 3, sleep })).rejects.toThrow(/connect timeout/);
+    expect(calls()).toBe(3);
+  });
+
+  it("makes one attempt by default", async () => {
+    const { fetch, calls } = flaky(1);
+    await expect(getPage(listUrl("1"), { fetch })).rejects.toThrow(/connect timeout/);
+    expect(calls()).toBe(1);
+  });
+
+  it("passes the retry options from HaryanaFetcher to getPage", async () => {
+    const { fetch, calls } = flaky(2);
+    const sleep = async () => {};
+    const f = new HaryanaFetcher({ fetch, attempts: 3, sleep, now });
+    const b = await f.fetchProject({ regno: "277 OF 2017", fetchKey: "1129" });
+    expect(calls()).toBe(3);
+    expect(b.files).toHaveLength(1);
+  });
+
+  it("fails the list read after three timed-out attempts", async () => {
+    const { fetch, calls } = flaky(3);
+    const waits: number[] = [];
+    const sleep = async (ms: number) => void waits.push(ms);
+    await expect(new HaryanaFetcher({ fetch, attempts: 3, retryDelayMs: 30_000, sleep }).listProjects("1")).rejects.toThrow(
+      /connect timeout/,
+    );
+    expect(calls()).toBe(3);
+    expect(waits).toEqual([30_000, 30_000]);
+  });
+
+  it("marks the detail page unreadable after three timed-out attempts", async () => {
+    const { fetch, calls } = flaky(3);
+    const sleep = async () => {};
+    const b = await new HaryanaFetcher({ fetch, attempts: 3, retryDelayMs: 30_000, sleep }).fetchProject({
+      regno: "277 OF 2017",
+      fetchKey: "1129",
+    });
+    expect(b.status).toBe("unreadable");
+    expect(b.files).toEqual([]);
+    expect(calls()).toBe(3);
+  });
+});
+
+describe("live retry policy", () => {
+  const LIVE_PAGES = 2;
+  const LIVE_JOB_BUDGET_MS = 600_000;
+
+  it("retries three times, 30 s apart", () => {
+    expect(LIVE_ATTEMPTS).toBe(3);
+    expect(LIVE_RETRY_DELAY_MS).toBe(30_000);
+  });
+
+  it("keeps the live proof inside the job timeout", () => {
+    const perPage = LIVE_ATTEMPTS * LIVE_TIMEOUT_MS + (LIVE_ATTEMPTS - 1) * LIVE_RETRY_DELAY_MS;
+    expect(LIVE_PAGES * perPage).toBeLessThan(LIVE_JOB_BUDGET_MS);
   });
 });
