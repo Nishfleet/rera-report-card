@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { gunzipSync } from "node:zlib";
 import { describe, expect, it } from "vitest";
-import { HaryanaFetcher, listUrl, USER_AGENT, type FetchLike } from "../../src/states/hr/fetcher";
+import { getPage, HaryanaFetcher, listUrl, USER_AGENT, type FetchLike } from "../../src/states/hr/fetcher";
 import { detailUrl } from "../../src/states/hr/parse";
 
 const dir = new URL("../fixtures/hr/", import.meta.url);
@@ -70,5 +70,41 @@ describe("HaryanaFetcher", () => {
       reason: "fetch failed: timeout",
       files: [],
     });
+  });
+});
+
+describe("getPage retries", () => {
+  const ok = { status: 200, arrayBuffer: async () => new ArrayBuffer(0) };
+  const flaky = (failures: number) => {
+    let calls = 0;
+    const fetch: FetchLike = async () => {
+      calls++;
+      if (calls <= failures) throw new Error("connect timeout");
+      return ok;
+    };
+    return { fetch, calls: () => calls };
+  };
+
+  it("attempts a timed-out fetch 3 times, waiting 30 s between attempts", async () => {
+    const { fetch, calls } = flaky(2);
+    const waits: number[] = [];
+    const sleep = async (ms: number) => void waits.push(ms);
+    const res = await getPage(listUrl("1"), { fetch, attempts: 3, retryDelayMs: 30_000, sleep });
+    expect(res.httpStatus).toBe(200);
+    expect(calls()).toBe(3);
+    expect(waits).toEqual([30_000, 30_000]);
+  });
+
+  it("still fails when all 3 attempts fail", async () => {
+    const { fetch, calls } = flaky(3);
+    const sleep = async () => {};
+    await expect(getPage(listUrl("1"), { fetch, attempts: 3, sleep })).rejects.toThrow(/connect timeout/);
+    expect(calls()).toBe(3);
+  });
+
+  it("makes one attempt by default", async () => {
+    const { fetch, calls } = flaky(1);
+    await expect(getPage(listUrl("1"), { fetch })).rejects.toThrow(/connect timeout/);
+    expect(calls()).toBe(1);
   });
 });

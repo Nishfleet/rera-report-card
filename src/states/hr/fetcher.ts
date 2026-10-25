@@ -14,14 +14,27 @@ export interface HaryanaFetcherOptions {
   fetch?: FetchLike;
   timeoutMs?: number;
   now?: () => Date;
+  attempts?: number;
+  retryDelayMs?: number;
+  sleep?: (ms: number) => Promise<void>;
 }
 
 export async function getPage(url: string, opts: HaryanaFetcherOptions = {}): Promise<RawFile> {
   const doFetch = opts.fetch ?? (globalThis.fetch as unknown as FetchLike);
-  const res = await doFetch(url, {
-    headers: { "user-agent": USER_AGENT },
-    signal: AbortSignal.timeout(opts.timeoutMs ?? 60_000),
-  });
+  const sleep = opts.sleep ?? ((ms: number) => new Promise<void>((r) => setTimeout(r, ms)));
+  const attempts = opts.attempts ?? 1;
+  let res: Awaited<ReturnType<FetchLike>> | undefined;
+  for (let attempt = 1; res === undefined; attempt++) {
+    try {
+      res = await doFetch(url, {
+        headers: { "user-agent": USER_AGENT },
+        signal: AbortSignal.timeout(opts.timeoutMs ?? 60_000),
+      });
+    } catch (e) {
+      if (attempt >= attempts) throw e;
+      await sleep(opts.retryDelayMs ?? 30_000);
+    }
+  }
   const bytes = new Uint8Array(await res.arrayBuffer());
   return { name: url.slice(BASE.length + 1).replace(/[^A-Za-z0-9]+/g, "-"), kind: "html", bytes, url, httpStatus: res.status };
 }
