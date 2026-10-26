@@ -5,6 +5,10 @@ export const USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/130 
 
 export const listUrl = (office: string) => `${BASE}/admincontrol/registered_projects/${office}`;
 
+export const LIVE_ATTEMPTS = 3;
+export const LIVE_RETRY_DELAY_MS = 30_000;
+export const LIVE_TIMEOUT_MS = 15_000;
+
 export type FetchLike = (url: string, init?: { headers?: Record<string, string>; signal?: AbortSignal }) => Promise<{
   status: number;
   arrayBuffer(): Promise<ArrayBuffer>;
@@ -14,16 +18,28 @@ export interface HaryanaFetcherOptions {
   fetch?: FetchLike;
   timeoutMs?: number;
   now?: () => Date;
+  attempts?: number;
+  retryDelayMs?: number;
+  sleep?: (ms: number) => Promise<void>;
 }
 
 export async function getPage(url: string, opts: HaryanaFetcherOptions = {}): Promise<RawFile> {
   const doFetch = opts.fetch ?? (globalThis.fetch as unknown as FetchLike);
-  const res = await doFetch(url, {
-    headers: { "user-agent": USER_AGENT },
-    signal: AbortSignal.timeout(opts.timeoutMs ?? 60_000),
-  });
-  const bytes = new Uint8Array(await res.arrayBuffer());
-  return { name: url.slice(BASE.length + 1).replace(/[^A-Za-z0-9]+/g, "-"), kind: "html", bytes, url, httpStatus: res.status };
+  const sleep = opts.sleep ?? ((ms: number) => new Promise<void>((r) => setTimeout(r, ms)));
+  const attempts = opts.attempts ?? 1;
+  for (let attempt = 1; ; attempt += 1) {
+    try {
+      const res = await doFetch(url, {
+        headers: { "user-agent": USER_AGENT },
+        signal: AbortSignal.timeout(opts.timeoutMs ?? 60_000),
+      });
+      const bytes = new Uint8Array(await res.arrayBuffer());
+      return { name: url.slice(BASE.length + 1).replace(/[^A-Za-z0-9]+/g, "-"), kind: "html", bytes, url, httpStatus: res.status };
+    } catch (e) {
+      if (attempt >= attempts) throw e;
+      await sleep(opts.retryDelayMs ?? LIVE_RETRY_DELAY_MS);
+    }
+  }
 }
 
 const decode = (f: RawFile) => new TextDecoder().decode(f.bytes);
