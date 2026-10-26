@@ -28,7 +28,39 @@ jobs:
       - if: steps.detect.outputs.has == 'true'
         run: npm run typecheck && npm run test:coverage
 
+  live-reach:
+    # Whether the Haryana portal answers is a fact about the portal, not about
+    # the pull request. Measure it here so a portal outage skips the proof
+    # instead of failing every PR: haryanarera.gov.in stopped answering GitHub
+    # runners between 2026-10-23 and 2026-10-25 and froze every PR on this repo
+    # at a red ci-ok.
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      reachable: ${{ steps.probe.outputs.reachable }}
+    steps:
+      - name: Probe haryanarera.gov.in
+        id: probe
+        env:
+          # The exact page the proof below reads first, fetched with the same
+          # browser identity the fetcher sends, so this measures what the
+          # proof will meet rather than what the site's front page does.
+          # listUrl("2") in src/states/hr/fetcher.ts builds this URL.
+          PORTAL: https://haryanarera.gov.in/admincontrol/registered_projects/2
+          UA: Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/130 Safari/537.36
+        run: |
+          code=$(curl -sS -L -o /dev/null --max-time 20 -A "$UA" -w '%{http_code}' "$PORTAL" || true)
+          echo "$PORTAL answered $code"
+          if [ "$code" = 200 ]; then
+            echo "reachable=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "reachable=false" >> "$GITHUB_OUTPUT"
+            echo "::warning::$PORTAL answered $code from this runner, so the live fetch proof did not run. Run the Portal reach probe workflow to see every portal's state."
+          fi
+
   live-fetch:
+    needs: live-reach
+    if: needs.live-reach.outputs.reachable == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -56,5 +88,8 @@ jobs:
           LIVE: ${{ needs.live-fetch.result }}
         run: |
           echo "test=$TEST live-fetch=$LIVE"
-          [ "$LIVE" = success ] || exit 1
+          # A portal that does not answer skips the proof. A portal that
+          # answers and breaks the parse still fails the build, so the proof
+          # keeps its teeth.
+          [ "$LIVE" = success ] || [ "$LIVE" = skipped ] || exit 1
           [ "$TEST" = success ] || [ "$TEST" = skipped ] || exit 1
