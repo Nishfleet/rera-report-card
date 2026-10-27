@@ -3,17 +3,16 @@
 # The merge itself stays gated by the required checks.
 name: Dependabot auto-merge
 
-on: pull_request_target
-
-permissions:
-  contents: write
-  pull-requests: write
+on: pull_request
 
 jobs:
   dependabot:
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    if: ${{ github.event.pull_request.user.id == 49699333 }} # dependabot[bot], by immutable id
+    permissions:
+      contents: write
+      pull-requests: write
+    if: ${{ github.event.pull_request.user.id == 49699333 && github.repository == 'Nishfleet/rera-report-card' }} # dependabot[bot], by immutable id
     steps:
       - name: Fetch metadata
         id: metadata
