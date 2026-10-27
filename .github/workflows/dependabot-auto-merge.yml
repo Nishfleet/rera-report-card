@@ -1,0 +1,31 @@
+# Dependabot patch and minor updates auto-merge (fleet-ops#10459 item 3, GitHub's
+# documented recipe). Major updates stay manual: a human arms them.
+# The merge itself stays gated by the required checks.
+name: Dependabot auto-merge
+
+on: pull_request_target
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  dependabot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    if: ${{ github.event.pull_request.user.id == 49699333 }} # dependabot[bot], by immutable id
+    steps:
+      - name: Fetch metadata
+        id: metadata
+        uses: dependabot/fetch-metadata@ffa630c65fa7e0ecfa0625b5ceda64399aea1b36 # v3.0.0
+        with:
+          github-token: "${{ github.token }}"
+
+      - name: Enable auto-merge for Dependabot PRs
+        run: gh pr merge --auto --squash "$PR_URL"
+        env:
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          GH_TOKEN: ${{ github.token }}
+        if: >-
+          ${{ steps.metadata.outputs.update-type == 'version-update:semver-patch' ||
+              steps.metadata.outputs.update-type == 'version-update:semver-minor' }}
