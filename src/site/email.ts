@@ -30,6 +30,7 @@ export function confirmEmail(p: {
   from: string;
   projectName: string;
   confirmUrl: string;
+  unfollowUrl: string;
   manageUrl: string;
 }): OutgoingEmail {
   const subject = `Confirm: follow ${p.projectName}`;
@@ -38,14 +39,22 @@ export function confirmEmail(p: {
     "Press the button to confirm. Nothing starts until you do. The link works for 7 days.",
     "We send one email when the record changes and one email each quarter. Nothing else.",
   ];
-  const ignore = "If you did not ask for this, ignore this email and nothing happens.";
+  const ignore = "If you did not ask for this, use the unfollow link below. The follow stops and the confirm link stops with it.";
   return {
     to: p.to,
     from: p.from,
     subject,
-    text: `${lines.join("\n\n")}\n\nConfirm: ${p.confirmUrl}\n\n${ignore}\nManage your follows: ${p.manageUrl}\n`,
-    html: shell(subject, lines, { href: p.confirmUrl, label: "Confirm and follow" }, `${esc(ignore)} <a href="${esc(p.manageUrl)}" style="color:#565b66">Manage your follows</a>.`),
-    headers: {},
+    text: `${lines.join("\n\n")}\n\nConfirm: ${p.confirmUrl}\n\n${ignore}\nUnfollow in one click: ${p.unfollowUrl}\nManage your follows: ${p.manageUrl}\n`,
+    html: shell(
+      subject,
+      lines,
+      { href: p.confirmUrl, label: "Confirm and follow" },
+      `${esc(ignore)} <a href="${esc(p.unfollowUrl)}" style="color:#565b66">Unfollow in one click</a> · <a href="${esc(p.manageUrl)}" style="color:#565b66">Manage your follows</a>.`,
+    ),
+    headers: {
+      "List-Unsubscribe": `<${p.unfollowUrl}>`,
+      "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
+    },
   };
 }
 
