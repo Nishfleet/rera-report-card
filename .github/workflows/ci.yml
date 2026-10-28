@@ -78,7 +78,7 @@ jobs:
         run: npx vitest run tests/hr/live.test.ts
 
   ci-ok:
-    needs: [test, live-fetch]
+    needs: [test, live-reach, live-fetch]
     if: always()
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -86,11 +86,16 @@ jobs:
       - name: Check results
         env:
           TEST: ${{ needs.test.result }}
+          REACH: ${{ needs.live-reach.result }}
           LIVE: ${{ needs.live-fetch.result }}
         run: |
-          echo "test=$TEST live-fetch=$LIVE"
+          echo "test=$TEST live-reach=$REACH live-fetch=$LIVE"
           # A portal that does not answer skips the proof. A portal that
           # answers and breaks the parse still fails the build, so the proof
           # keeps its teeth.
           [ "$LIVE" = success ] || [ "$LIVE" = skipped ] || exit 1
           [ "$TEST" = success ] || [ "$TEST" = skipped ] || exit 1
+          # The probe has to succeed itself. A failed live-reach leaves
+          # live-fetch skipped, so without this line a red probe merges green
+          # with the live proof silently dropped.
+          [ "$REACH" = success ] || exit 1
