@@ -93,12 +93,13 @@ jobs:
           # A portal that does not answer skips the proof. A portal that
           # answers and breaks the parse still fails the build, so the proof
           # keeps its teeth.
-          [ "$LIVE" = success ] || [ "$LIVE" = skipped ] || exit 1
-          [ "$TEST" = success ] || [ "$TEST" = skipped ] || exit 1
+          [ "$LIVE" = success ] || [ "$LIVE" = skipped ] || { echo "live-fetch=$LIVE" >&2; exit 1; }
+          [ "$TEST" = success ] || [ "$TEST" = skipped ] || { echo "test=$TEST" >&2; exit 1; }
           # The probe has to succeed itself. A failed live-reach leaves
           # live-fetch skipped, so without this line a red probe merges green
           # with the live proof silently dropped. live-reach has no if: and
           # this workflow has no path filter, so it reports success or failure
           # and never skipped: a later edit that skips it fails here on
-          # purpose instead of dropping the proof quietly.
-          [ "$REACH" = success ] || exit 1
+          # purpose instead of dropping the proof quietly. Each failure names the
+          # job that caused it, so a red gate is read without counting lines.
+          [ "$REACH" = success ] || { echo "live-reach=$REACH" >&2; exit 1; }
