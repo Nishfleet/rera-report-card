@@ -209,6 +209,32 @@ describe("follow by email", () => {
     expect(html).toContain("Back to &lt;img src=x onerror=alert(1)&gt; &quot;Heights&quot;</a>");
   });
 
+  it("carries a one-click unfollow link and the List-Unsubscribe header", async () => {
+    const s = setup();
+    await follow(s);
+    const mail = s.e.EMAIL.sent[0];
+    const headers = mail.headers ?? {};
+    const link = /\/u\/([A-Za-z0-9_.-]+)/.exec(mail.text)?.[1] ?? "";
+    expect(link).not.toBe("");
+    expect(mail.text).toContain(`Unfollow in one click: ${ORIGIN}/u/${link}`);
+    expect(mail.html).toContain(`href="${ORIGIN}/u/${link}"`);
+    expect(headers["List-Unsubscribe"]).toBe(`<${ORIGIN}/u/${link}>`);
+    expect(headers["List-Unsubscribe-Post"]).toBe("List-Unsubscribe=One-Click");
+  });
+
+  it("stops a follow in one click before it is confirmed, and the confirm link then dies", async () => {
+    const s = setup();
+    await follow(s);
+    const mail = s.e.EMAIL.sent[0];
+    const path = /https:\/\/example\.test(\/u\/[A-Za-z0-9_.-]+)/.exec(mail.text)?.[1] ?? "";
+    expect(path).not.toBe("");
+    const res = await s.post(path, { "List-Unsubscribe": "One-Click" });
+    expect(res.status).toBe(200);
+    expect(text(await res.text())).toContain("You no longer follow this project");
+    expect(followState(s)).toBe("unfollowed");
+    expect((await s.post("/follow/confirm", { t: confirmLink(s) })).status).toBe(400);
+  });
+
   it("shows the sent state on the page", async () => {
     const s = setup();
     const html = await (await s.call(`/p/hr/${SAMPLE.slug}?f=sent`)).text();

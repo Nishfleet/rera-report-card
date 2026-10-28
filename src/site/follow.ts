@@ -54,6 +54,7 @@ export async function requestFollow(d: Deps, project: ProjectRow, rawEmail: stri
     from: d.from,
     projectName: project.name,
     confirmUrl: `${d.origin}/follow/confirm?t=${token}`,
+    unfollowUrl: await unfollowUrl(d, followId),
     manageUrl: await manageUrl(d, follower.id),
   });
   let status = "sent";
