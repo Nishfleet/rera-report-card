@@ -97,5 +97,8 @@ jobs:
           [ "$TEST" = success ] || [ "$TEST" = skipped ] || exit 1
           # The probe has to succeed itself. A failed live-reach leaves
           # live-fetch skipped, so without this line a red probe merges green
-          # with the live proof silently dropped.
+          # with the live proof silently dropped. live-reach has no if: and
+          # this workflow has no path filter, so it reports success or failure
+          # and never skipped: a later edit that skips it fails here on
+          # purpose instead of dropping the proof quietly.
           [ "$REACH" = success ] || exit 1
