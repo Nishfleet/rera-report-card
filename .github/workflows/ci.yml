@@ -1,128 +1,95 @@
+# The boring lane (fleet-ops#10935): GitHub-hosted runners, one file, and every
+# job names the incident or standing rule that keeps it. The main ruleset
+# requires `ci-ok`, which needs every job here. Every job runs on pull_request
+# and on merge_group, because the queue evaluates checks on its own merge ref
+# (GitHub docs, "Managing a merge queue").
 name: CI
 
 on:
   pull_request:
-  workflow_dispatch:
-  push:
-    branches: [main]
+  merge_group:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
 
 permissions:
   contents: read
 
 jobs:
   test:
+    # Standing rule: nothing reaches main without a live-verified check at its
+    # head SHA (global-standing-rules, "Fan out to the governors").
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
-      - name: Detect package.json
-        id: detect
-        run: |
-          if [ -f package.json ]; then echo "has=true" >> "$GITHUB_OUTPUT"; else echo "No package.json yet, skipping tests"; fi
-      - if: steps.detect.outputs.has == 'true'
-        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
-        with:
-          node-version: 22
-          cache: npm
-      - if: steps.detect.outputs.has == 'true'
-        run: npm ci
-      - if: steps.detect.outputs.has == 'true'
-        run: npm run typecheck && npm run test:coverage
-
-  live-reach:
-    # Whether the Haryana portal answers is a fact about the portal, not about
-    # the pull request. Measure it here so a portal outage skips the proof
-    # instead of failing every PR: haryanarera.gov.in stopped answering GitHub
-    # runners between 2026-10-23 and 2026-10-25 and froze every PR on this repo
-    # at a red ci-ok.
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    outputs:
-      reachable: ${{ steps.probe.outputs.reachable }}
-    steps:
-      - name: Probe haryanarera.gov.in
-        id: probe
-        env:
-          # The exact page the proof below reads first, fetched with the same
-          # browser identity the fetcher sends, so this measures what the
-          # proof will meet rather than what the site's front page does.
-          # listUrl("2") in src/states/hr/fetcher.ts builds this URL.
-          PORTAL: https://haryanarera.gov.in/admincontrol/registered_projects/2
-          UA: Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/130 Safari/537.36
-        run: |
-          code=$(curl -sS -L -o /dev/null --max-time 20 -A "$UA" -w '%{http_code}' "$PORTAL" || true)
-          echo "$PORTAL answered $code"
-          if [ "$code" = 200 ]; then
-            echo "reachable=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "reachable=false" >> "$GITHUB_OUTPUT"
-            echo "::warning::$PORTAL answered $code from this runner, so the live fetch proof did not run. Run the Portal reach probe workflow to see every portal's state."
-          fi
-
-  live-fetch:
-    needs: live-reach
-    if: needs.live-reach.outputs.reachable == 'true'
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
-        with:
-          node-version: 22
-          cache: npm
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with: {persist-credentials: false}
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with: {node-version: 22, cache: npm}
       - run: npm ci
-      # Reach proof: loads the live Gurugram list and one detail page, parses both, no CAPTCHA solving.
-      - name: Live Haryana fetch
-        env:
-          LIVE_FETCH: "1"
-        run: npx vitest run tests/hr/live.test.ts
+      - run: npm run typecheck
+      - run: npm run test:coverage
 
   lint:
+    # Incident: rera-report-card#47 (fixed by #56), the no-comments lint gate
+    # must run on every pull request, not only on main.
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with: {persist-credentials: false}
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with: {node-version: 22, cache: npm}
+      - run: npm ci
+      - run: npm run lint
+
+  preview:
+    # Owner decision 2026-11-01 (fleet-ops#10935): a preview link the owner can
+    # click is the last gate of every product PR. Cloudflare's official action
+    # runs `wrangler preview`, which gives this PR its own copy of the Worker
+    # at https://pr-<number>-rera-report-card.nishant345.workers.dev, backed by
+    # the preview database named in wrangler.toml. The GitHub environment
+    # records that URL, so the PR shows a "View deployment" button.
+    # The merge queue has no pull request to preview, so the job skips there,
+    # and GitHub counts a skipped required check as passed.
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment:
+      name: preview
+      url: ${{ steps.preview.outputs.preview-url }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with: {persist-credentials: false}
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with: {node-version: 22, package-manager-cache: false}
+      - run: npm ci
+      - id: preview
+        uses: cloudflare/wrangler-action@953926a2e2182532811c01a25e53647d93bf07c0 # v4.1.3
         with:
-          persist-credentials: false
-      - name: Detect package.json
-        id: detect
-        run: |
-          if [ -f package.json ]; then echo "has=true" >> "$GITHUB_OUTPUT"; else echo "No package.json yet, skipping lint"; fi
-      - if: steps.detect.outputs.has == 'true'
-        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
-        with:
-          node-version: 22
-          cache: npm
-      - if: steps.detect.outputs.has == 'true'
-        run: npm ci
-      - if: steps.detect.outputs.has == 'true'
-        run: npm run lint
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          wranglerVersion: "4.155.0"
+          command: preview --name pr-${{ github.event.pull_request.number }}
 
   ci-ok:
-    needs: [test, live-reach, live-fetch, lint]
+    # Incident: #7 (fixed by #55), the required check must need every gate job
+    # above, so a dropped or renamed job fails closed. The main ruleset requires
+    # this one check. A skipped preview passes only in the merge queue, which
+    # has no pull request to preview.
+    needs: [test, lint, preview]
     if: always()
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 5
     steps:
-      - name: Check results
-        env:
+      - env:
           TEST: ${{ needs.test.result }}
-          REACH: ${{ needs.live-reach.result }}
-          LIVE: ${{ needs.live-fetch.result }}
           LINT: ${{ needs.lint.result }}
+          PREVIEW: ${{ needs.preview.result }}
+          EVENT: ${{ github.event_name }}
         run: |
-          echo "test=$TEST live-reach=$REACH live-fetch=$LIVE lint=$LINT"
-          # A portal that does not answer skips the proof. A portal that
-          # answers and breaks the parse still fails the build, so the proof
-          # keeps its teeth.
-          [ "$LIVE" = success ] || [ "$LIVE" = skipped ] || { echo "live-fetch=$LIVE" >&2; exit 1; }
-          [ "$TEST" = success ] || [ "$TEST" = skipped ] || { echo "test=$TEST" >&2; exit 1; }
-          [ "$LINT" = success ] || [ "$LINT" = skipped ] || { echo "lint=$LINT" >&2; exit 1; }
-          # The probe has to succeed itself. A failed live-reach leaves
-          # live-fetch skipped, so without this line a red probe merges green
-          # with the live proof silently dropped. live-reach has no if: and
-          # this workflow has no path filter, so it reports success or failure
-          # and never skipped: a later edit that skips it fails here on
-          # purpose instead of dropping the proof quietly. Each failure names the
-          # job that caused it, so a red gate is read without counting lines.
-          [ "$REACH" = success ] || { echo "live-reach=$REACH" >&2; exit 1; }
+          echo "test=$TEST lint=$LINT preview=$PREVIEW event=$EVENT"
+          [ "$TEST" = success ] || { echo "test=$TEST" >&2; exit 1; }
+          [ "$LINT" = success ] || { echo "lint=$LINT" >&2; exit 1; }
+          [ "$PREVIEW" = success ] || { [ "$EVENT" = merge_group ] && [ "$PREVIEW" = skipped ]; } || { echo "preview=$PREVIEW" >&2; exit 1; }
