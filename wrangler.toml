@@ -1,5 +1,6 @@
-# Public site Worker. Not deployed yet: it needs a Cloudflare account, a domain on
-# Cloudflare DNS onboarded to Email Service, and a D1 database (see README).
+# Public site Worker. Deployed on every merge to main by .github/workflows/deploy.yml;
+# every pull request gets its own Preview from the [previews] block below.
+# Email sending still needs a domain onboarded to Cloudflare Email Service (see README).
 name = "rera-report-card"
 main = "src/site/entry.ts"
 compatibility_date = "2026-10-01"
@@ -12,7 +13,7 @@ globs = ["**/*.ttf"]
 [[d1_databases]]
 binding = "DB"
 database_name = "rera-report-card"
-database_id = "REPLACE_WITH_D1_DATABASE_ID"
+database_id = "1dc0ddec-8c0a-4a96-bf7e-29672a53516a"
 
 [[send_email]]
 name = "EMAIL"
@@ -21,4 +22,18 @@ name = "EMAIL"
 FROM_ADDRESS = "follow@REPLACE_WITH_DOMAIN"
 PUBLIC_ORIGIN = "https://REPLACE_WITH_DOMAIN"
 
-# Secret, set with: npx wrangler secret put SECRET
+# Secret SECRET: the deploy workflow syncs it from the repository secret of the same name.
+
+# Previews do not inherit production settings (Cloudflare Previews docs), so each
+# pull request's copy gets the same bindings, pointed at the preview database.
+[previews.vars]
+FROM_ADDRESS = "follow@REPLACE_WITH_DOMAIN"
+PUBLIC_ORIGIN = "https://REPLACE_WITH_DOMAIN"
+
+[[previews.d1_databases]]
+binding = "DB"
+database_name = "rera-report-card-preview"
+database_id = "6d0bc6a6-9001-4731-9cbf-66041bce0daa"
+
+[[previews.send_email]]
+name = "EMAIL"
