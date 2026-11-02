@@ -5,6 +5,10 @@ name = "rera-report-card"
 main = "src/site/entry.ts"
 compatibility_date = "2026-10-01"
 
+# Workers Logs (Cloudflare docs): keep this Worker's logs in the dashboard.
+[observability]
+enabled = true
+
 # The card PNG is drawn with fonts bundled as binary data.
 [[rules]]
 type = "Data"
