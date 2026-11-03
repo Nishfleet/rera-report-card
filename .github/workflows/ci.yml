@@ -1,6 +1,6 @@
 # The boring lane (fleet-ops#10935): GitHub-hosted runners, one file, and every
 # job names the incident or standing rule that keeps it. The main ruleset
-# requires `ci-ok`, which needs every job here. Every job runs on pull_request
+# requires `ci-ok`, which needs every gate job here. Every job runs on pull_request
 # and on merge_group, because the queue evaluates checks on its own merge ref
 # (GitHub docs, "Managing a merge queue").
 name: CI
@@ -51,9 +51,10 @@ jobs:
     # at https://pr-<number>-rera-report-card.nishant345.workers.dev, backed by
     # the preview database named in wrangler.toml. The GitHub environment
     # records that URL, so the PR shows a "View deployment" button.
-    # The merge queue has no pull request to preview, so the job skips there,
-    # and GitHub counts a skipped required check as passed.
-    if: github.event_name == 'pull_request'
+    # Not a required check. It skips in the merge queue (no pull request) and
+    # for forks and Dependabot, whose runs get no Actions secrets (GitHub docs,
+    # "Automating Dependabot with GitHub Actions").
+    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository && github.actor != 'dependabot[bot]'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     environment:
@@ -88,9 +89,8 @@ jobs:
   ci-ok:
     # Incident: #7 (fixed by #55), the required check must need every gate job
     # above, so a dropped or renamed job fails closed. The main ruleset requires
-    # this one check. A skipped preview passes only in the merge queue, which
-    # has no pull request to preview.
-    needs: [test, lint, preview]
+    # this one check. The preview stays visible on the PR but does not gate it.
+    needs: [test, lint]
     if: always()
     runs-on: ubuntu-latest
     timeout-minutes: 5
@@ -98,10 +98,8 @@ jobs:
       - env:
           TEST: ${{ needs.test.result }}
           LINT: ${{ needs.lint.result }}
-          PREVIEW: ${{ needs.preview.result }}
           EVENT: ${{ github.event_name }}
         run: |
-          echo "test=$TEST lint=$LINT preview=$PREVIEW event=$EVENT"
+          echo "test=$TEST lint=$LINT event=$EVENT"
           [ "$TEST" = success ] || { echo "test=$TEST" >&2; exit 1; }
           [ "$LINT" = success ] || { echo "lint=$LINT" >&2; exit 1; }
-          [ "$PREVIEW" = success ] || { [ "$EVENT" = merge_group ] && [ "$PREVIEW" = skipped ]; } || { echo "preview=$PREVIEW" >&2; exit 1; }
