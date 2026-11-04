@@ -1,5 +1,6 @@
 import type { Letter } from "../grade";
-import { BRAND, esc } from "./render";
+import { esc } from "./html";
+import { BRAND } from "./render";
 
 export interface CardInput {
   name: string;
