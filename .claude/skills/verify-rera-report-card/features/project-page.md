@@ -29,5 +29,5 @@ Preconditions:
 ## Gotchas
 
 - Health passes on an empty database, because it only runs `SELECT 1`. Use the project page to prove the seed.
-- The `detail-1129` fixture yields no filings, so its grade has no letter (`letter` and `points` are NULL) and the page shows the not-enough-filings state. That is the parser's real output, not a seed bug.
+- The `detail-1129` fixture yields no filings, so its grade has no letter (`letter` and `points` are NULL) and the page says `no grade yet`. That is the parser's real output, not a seed bug.
 - The project page is cached for 300 seconds (`cache-control: public, max-age=300`) unless `?f=` is set.
