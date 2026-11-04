@@ -43,4 +43,19 @@ export default tseslint.config(
       "no-warning-comments": ["error", { terms: WORKAROUND_TERMS, location: "anywhere" }],
     },
   },
+
+  {
+    files: ["src/**/*.ts"],
+    ignores: ["src/states/hr/fetcher.ts"],
+    rules: {
+      "no-restricted-globals": [
+        "error",
+        { name: "fetch", message: "Outbound requests go through src/states/hr/fetcher.ts, which owns the timeout, retries and user agent." },
+      ],
+      "no-restricted-properties": [
+        "error",
+        { property: "fetch",message: "Outbound requests go through src/states/hr/fetcher.ts, which owns the timeout, retries and user agent." },
+      ],
+    },
+  },
 );
