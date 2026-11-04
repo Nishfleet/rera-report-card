@@ -37,3 +37,4 @@
 # Sign-in links and stored emails (signed tokens, encryption).
 /src/site/crypto.ts         @nish3451
 /src/site/follow.ts         @nish3451
+/src/site/store.ts          @nish3451
