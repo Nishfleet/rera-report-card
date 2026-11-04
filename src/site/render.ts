@@ -1,5 +1,6 @@
 import type { Grade, InputName, Letter, Reason } from "../grade";
 import type { ProjectStatus, StateCode } from "../ingest/types";
+import { html, raw, type SafeHtml } from "./html";
 
 export const BRAND = "RERA Report Card";
 
@@ -50,15 +51,6 @@ export const DISCLAIMER =
 export const GRADE_NOTE = "A grade summarises filings. It is not advice on whether to buy or pay.";
 export const FOLLOW_PROMISE = "One email when the record changes. One email each quarter. Nothing else.";
 
-export function esc(value: unknown): string {
-  return String(value ?? "")
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#39;");
-}
-
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
 export function day(iso: string): string {
@@ -82,7 +74,7 @@ export function domainOf(url: string): string {
 }
 
 const svg = (path: string, size = 20, stroke = 1.7) =>
-  `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${stroke}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${path}</svg>`;
+  html`<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${stroke}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${raw(path)}</svg>`;
 
 const ICONS: Record<InputName | "check" | "info" | "bell" | "share" | "search", string> = {
   qpr: '<path d="M12 3.5l9 16H3l9-16z"/><path d="M12 10v4.5M12 17.2v.01"/>',
@@ -113,19 +105,11 @@ const LABELS: [Letter, number, number][] = [
   ["A", 249.8, 99],
 ];
 
-export function gauge(letter: Letter | null): string {
+export function gauge(letter: Letter | null): SafeHtml {
   const label = letter ? `Grade ${letter} on a scale from E to A` : "Grade not available yet";
-  const arcs = (Object.keys(ARCS) as Letter[])
-    .map((l) => `<path stroke="${l === letter ? "var(--accent)" : "var(--line)"}" d="${ARCS[l]}"/>`)
-    .join("");
-  const labels = LABELS.map(
-    ([l, x, y]) => `<text x="${x}" y="${y}"${l === letter ? ' fill="var(--accent)"' : ""}>${l}</text>`,
-  ).join("");
-  return (
-    `<svg viewBox="0 0 260 150" role="img" aria-label="${label}">` +
-    `<g fill="none" stroke-width="14" stroke-linecap="round">${arcs}</g>` +
-    `<g font-size="12" font-weight="600" fill="var(--ink-2)" text-anchor="middle">${labels}</g></svg>`
-  );
+  const arcs = (Object.keys(ARCS) as Letter[]).map((l) => html`<path stroke="${l === letter ? "var(--accent)" : "var(--line)"}" d="${ARCS[l]}"/>`);
+  const labels = LABELS.map(([l, x, y]) => html`<text x="${x}" y="${y}"${l === letter ? html` fill="var(--accent)"` : ""}>${l}</text>`);
+  return html`<svg viewBox="0 0 260 150" role="img" aria-label="${label}"><g fill="none" stroke-width="14" stroke-linecap="round">${arcs}</g><g font-size="12" font-weight="600" fill="var(--ink-2)" text-anchor="middle">${labels}</g></svg>`;
 }
 
 const CSS = `
@@ -219,30 +203,30 @@ export interface Meta {
   jsonLd?: unknown[];
 }
 
-export function layout(meta: Meta, body: string, nonce: string): string {
-  const ld = (meta.jsonLd ?? [])
-    .map((o) => `<script type="application/ld+json" nonce="${esc(nonce)}">${JSON.stringify(o).replace(/</g, "\\u003c")}</script>`)
-    .join("");
+export function layout(meta: Meta, body: SafeHtml, nonce: string): SafeHtml {
+  const ld = (meta.jsonLd ?? []).map(
+    (o) => html`<script type="application/ld+json" nonce="${nonce}">${raw(JSON.stringify(o).replace(/</g, "\\u003c"))}</script>`,
+  );
   const img = meta.image
-    ? `<meta property="og:image" content="${esc(meta.image)}"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta name="twitter:image" content="${esc(meta.image)}">`
+    ? html`<meta property="og:image" content="${meta.image}"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta name="twitter:image" content="${meta.image}">`
     : "";
-  return `<!doctype html>
+  return html`<!doctype html>
 <html lang="en-IN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>${esc(meta.title)}</title>
-<meta name="description" content="${esc(meta.description)}">
-<link rel="canonical" href="${esc(meta.canonical)}">
-${meta.noindex ? '<meta name="robots" content="noindex">' : ""}
+<title>${meta.title}</title>
+<meta name="description" content="${meta.description}">
+<link rel="canonical" href="${meta.canonical}">
+${meta.noindex ? html`<meta name="robots" content="noindex">` : ""}
 <meta name="theme-color" content="#f5f4ef">
 <meta property="og:type" content="website"><meta property="og:site_name" content="${BRAND}">
-<meta property="og:title" content="${esc(meta.title)}"><meta property="og:description" content="${esc(meta.description)}">
-<meta property="og:url" content="${esc(meta.canonical)}"><meta name="twitter:card" content="summary_large_image">
+<meta property="og:title" content="${meta.title}"><meta property="og:description" content="${meta.description}">
+<meta property="og:url" content="${meta.canonical}"><meta name="twitter:card" content="summary_large_image">
 ${img}${ld}
-<style nonce="${esc(nonce)}">${CSS}</style></head><body>
+<style nonce="${nonce}">${raw(CSS)}</style></head><body>
 <a class="skip" href="#main">Skip to content</a>
 <header class="top"><a class="brand" href="/"><span class="mark" aria-hidden="true">R</span>${BRAND}</a>
 <a class="iconbtn" href="/" aria-label="Search projects">${svg(ICONS.search, 22, 1.8)}</a></header>
 ${body}
-<footer class="foot"><p>${esc(DISCLAIMER)}</p></footer>
+<footer class="foot"><p>${DISCLAIMER}</p></footer>
 </body></html>`;
 }
 
@@ -284,45 +268,48 @@ export function shareLine(v: ProjectView): string {
   return top ? `${v.name}: grade ${g.letter}. ${top.title}, ${day(top.filingDate)}.` : `${v.name}: grade ${g.letter}. No reasons lowered the grade.`;
 }
 
-function reasonCard(r: Reason, input: InputName | undefined): string {
+function reasonCard(r: Reason, input: InputName | undefined): SafeHtml {
   const dots = { High: 3, Medium: 2, Low: 1 }[r.impact];
-  return `<li class="card reason">
+  return html`<li class="card reason">
 <div class="r-top"><span class="ic">${svg(ICONS[input ?? "registration"])}</span>
-<div><p class="rt">${esc(r.title)}</p><p class="rd">${esc(r.detail)}</p></div></div>
-<div class="r-bot"><p class="src">${esc(input ? INPUT_WORDS[input] : "Filing")} record, ${esc(day(r.filingDate))}<br><a href="${esc(r.sourceUrl)}" rel="nofollow noopener" target="_blank">${esc(domainOf(r.sourceUrl))}</a></p>
-<p class="imp"><span class="dots" aria-hidden="true">${[1, 2, 3].map((i) => `<i${i <= dots ? ' class="on"' : ""}></i>`).join("")}</span>${esc(r.impact)} impact</p></div></li>`;
+<div><p class="rt">${r.title}</p><p class="rd">${r.detail}</p></div></div>
+<div class="r-bot"><p class="src">${input ? INPUT_WORDS[input] : "Filing"} record, ${day(r.filingDate)}<br><a href="${r.sourceUrl}" rel="nofollow noopener" target="_blank">${domainOf(r.sourceUrl)}</a></p>
+<p class="imp"><span class="dots" aria-hidden="true">${[1, 2, 3].map((i) => html`<i${i <= dots ? html` class="on"` : ""}></i>`)}</span>${r.impact} impact</p></div></li>`;
 }
 
-function followDock(v: ProjectView, nonce: string): string {
+function followDock(v: ProjectView, nonce: string): SafeHtml {
   const url = `${pageUrl(v)}?s=wa`;
   const wa = `https://wa.me/?text=${encodeURIComponent(`${shareLine(v)} ${url}`)}`;
-  const share = `<a class="btn" id="share" href="${esc(wa)}" target="_blank" rel="noopener">${svg(ICONS.share)}Share</a>`;
-  if (v.status === "completed") return `<div class="dock">${share}</div>`;
+  const share = html`<a class="btn" id="share" href="${wa}" target="_blank" rel="noopener">${svg(ICONS.share)}Share</a>`;
+  if (v.status === "completed") return html`<div class="dock">${share}</div>`;
   const state = v.followState;
   const status =
     state === "sent"
-      ? '<p role="status"><b>Check your email to confirm.</b> The follow starts when you press the button in that email.</p>'
+      ? html`<p role="status"><b>Check your email to confirm.</b> The follow starts when you press the button in that email.</p>`
       : state === "invalid"
-        ? '<p role="alert">That email address does not look right. Check it and try again.</p>'
+        ? html`<p role="alert">That email address does not look right. Check it and try again.</p>`
         : state === "limited"
-          ? '<p role="alert">Too many follow requests from this connection. Try again in an hour.</p>'
+          ? html`<p role="alert">Too many follow requests from this connection. Try again in an hour.</p>`
           : "";
-  return `<div class="dock">
+  const shareData = raw(
+    `{title:document.title,text:${JSON.stringify(shareLine(v)).replace(/</g, "\\u003c")},url:${JSON.stringify(`${pageUrl(v)}?s=share`).replace(/</g, "\\u003c")}}`,
+  );
+  return html`<div class="dock">
 <details class="follow"${state ? " open" : ""}><summary class="btn primary">${svg(ICONS.bell)}Follow this project</summary>
 <form class="card sheet" method="post" action="/api/follow">
 ${status}
 <label for="email">Email</label>
 <input id="email" name="email" type="email" autocomplete="email" required maxlength="254" placeholder="you@example.com">
-<input type="hidden" name="state" value="${esc(v.state)}"><input type="hidden" name="slug" value="${esc(v.slug)}">
+<input type="hidden" name="state" value="${v.state}"><input type="hidden" name="slug" value="${v.slug}">
 <label class="hp" aria-hidden="true">Leave empty <input name="website" tabindex="-1" autocomplete="off"></label>
 <button class="btn primary" type="submit">Follow</button>
 <p class="small">${FOLLOW_PROMISE} No account and no password.</p>
 </form></details>
 ${share}</div>
-<script nonce="${esc(nonce)}">(function(){var a=document.getElementById("share");if(!a||!navigator.share)return;a.addEventListener("click",function(e){e.preventDefault();navigator.share({title:document.title,text:${JSON.stringify(shareLine(v)).replace(/</g, "\\u003c")},url:${JSON.stringify(`${pageUrl(v)}?s=share`).replace(/</g, "\\u003c")}}).catch(function(){});});})();</script>`;
+<script nonce="${nonce}">(function(){var a=document.getElementById("share");if(!a||!navigator.share)return;a.addEventListener("click",function(e){e.preventDefault();navigator.share(${shareData}).catch(function(){});});})();</script>`;
 }
 
-export function renderProject(v: ProjectView, nonce: string): string {
+export function renderProject(v: ProjectView, nonce: string): SafeHtml {
   const g = v.grade;
   const letter = g?.letter ?? null;
   const statusWord = STATUS_WORDS[v.status];
@@ -330,64 +317,62 @@ export function renderProject(v: ProjectView, nonce: string): string {
   const reasons = g ? sortedReasons(g) : [];
   const top = reasons.slice(0, 5);
   const rest = reasons.slice(5);
-  const readLine = v.readAt ? `Read from ${esc(v.sourceName)} on ${esc(istTime(v.readAt))}.` : `Not read from ${esc(v.sourceName)} yet.`;
+  const readLine = v.readAt ? html`Read from ${v.sourceName} on ${istTime(v.readAt)}.` : html`Not read from ${v.sourceName} yet.`;
   const readable = g ? 6 - g.unread.length : 0;
 
-  const gradeCard = `<section class="card grade" aria-labelledby="g-title">
+  const gradeCard = html`<section class="card grade" aria-labelledby="g-title">
 <p class="label" id="g-title">Report card grade</p>
 <div class="gauge">${gauge(letter)}<div class="gcenter">${
-    letter ? `<span class="letter">${letter}</span><span class="gword">${GRADE_WORDS[letter]}</span>` : '<span class="letter none">Not available yet</span>'
+    letter ? html`<span class="letter">${letter}</span><span class="gword">${GRADE_WORDS[letter]}</span>` : html`<span class="letter none">Not available yet</span>`
   }</div></div>
 <p class="small center">${readLine}</p>
-<dl class="stats"><div><dt>${reasons.length}</dt><dd>reasons</dd></div><div><dt>${v.filingsRead}</dt><dd>filings read</dd></div><div><dt>${esc(g?.rulesVersion ?? "v1")}</dt><dd>rule table</dd></div></dl>
+<dl class="stats"><div><dt>${reasons.length}</dt><dd>reasons</dd></div><div><dt>${v.filingsRead}</dt><dd>filings read</dd></div><div><dt>${g?.rulesVersion ?? "v1"}</dt><dd>rule table</dd></div></dl>
 <p class="small center">${GRADE_NOTE}</p></section>`;
 
-  let why: string;
-  if (letter && g) {
-    why = `<h2 class="label head2">Why it is ${letter === "A" || letter === "E" ? "an" : "a"} ${letter} <span class="asof">as of ${esc(day(g.asOf))}</span></h2>`;
-    why += top.length
-      ? `<ul class="reasons">${top.map((r) => reasonCard(r, v.ruleInputs[r.ruleId])).join("")}</ul>`
-      : '<p class="summary">No filing we read lowered the grade.</p>';
-    if (rest.length) {
-      why += `<details class="more"><summary>${rest.length} more ${rest.length === 1 ? "reason" : "reasons"}</summary><ul class="reasons">${rest
-        .map((r) => reasonCard(r, v.ruleInputs[r.ruleId]))
-        .join("")}</ul></details>`;
-    }
-  } else {
-    why = `<h2 class="label head2">Why there is no grade yet</h2>
+  const why =
+    letter && g
+      ? html`<h2 class="label head2">Why it is ${letter === "A" || letter === "E" ? "an" : "a"} ${letter} <span class="asof">as of ${day(g.asOf)}</span></h2>${
+          top.length
+            ? html`<ul class="reasons">${top.map((r) => reasonCard(r, v.ruleInputs[r.ruleId]))}</ul>`
+            : html`<p class="summary">No filing we read lowered the grade.</p>`
+        }${
+          rest.length
+            ? html`<details class="more"><summary>${rest.length} more ${rest.length === 1 ? "reason" : "reasons"}</summary><ul class="reasons">${rest.map((r) =>
+                reasonCard(r, v.ruleInputs[r.ruleId]),
+              )}</ul></details>`
+            : ""
+        }`
+      : html`<h2 class="label head2">Why there is no grade yet</h2>
 <div class="card how"><p>We could read ${readable} of the 6 inputs a grade uses. A grade needs at least 3. We never score what we could not read.</p></div>`;
-  }
 
   const clean = g?.clean.length
-    ? `<div class="card list"><p class="label">Checked, no effect on the grade</p><ul>${g.clean
-        .map((i) => `<li>${svg(ICONS.check, 18, 2)}${esc(CLEAN_WORDS[i])}</li>`)
-        .join("")}</ul></div>`
+    ? html`<div class="card list"><p class="label">Checked, no effect on the grade</p><ul>${g.clean.map((i) => html`<li>${svg(ICONS.check, 18, 2)}${CLEAN_WORDS[i]}</li>`)}</ul></div>`
     : "";
   const unread = g?.unread.length
-    ? `<div class="card list unread"><p class="label">We could not read</p><ul>${g.unread
-        .map((u) => `<li>${svg(ICONS.info, 18, 1.8)}<span><b>${esc(INPUT_WORDS[u.input])}.</b> ${esc(sentence(u.reason))}</span></li>`)
-        .join("")}</ul></div>`
+    ? html`<div class="card list unread"><p class="label">We could not read</p><ul>${g.unread.map(
+        (u) => html`<li>${svg(ICONS.info, 18, 1.8)}<span><b>${INPUT_WORDS[u.input]}.</b> ${sentence(u.reason)}</span></li>`,
+      )}</ul></div>`
     : "";
 
   const sample = v.sample
-    ? `<p class="note">${svg(ICONS.info, 18, 1.8)}<span><b>Sample data.</b> The facts on this page are invented. They are not the record of any real project.</span></p>`
+    ? html`<p class="note">${svg(ICONS.info, 18, 1.8)}<span><b>Sample data.</b> The facts on this page are invented. They are not the record of any real project.</span></p>`
     : "";
 
-  const body = `<main class="page" id="main">${sample}
+  const body = html`<main class="page" id="main">${sample}
 <div class="layout"><div class="col-a">
 <section class="head">
-<p class="small">${esc(stateName)} · ${esc(titleCase(v.district))} · ${esc(v.locality)}</p>
-<h1>${esc(v.name)}</h1>
-<p class="mono ink2">${esc(v.sourceName)} ${esc(v.regno)}</p>
-<p class="small">Promoter: ${esc(v.promoter)}${statusWord ? ` · ${statusWord}` : ""}</p>
-<p class="summary">${esc(summary(v))}</p>
+<p class="small">${stateName} · ${titleCase(v.district)} · ${v.locality}</p>
+<h1>${v.name}</h1>
+<p class="mono ink2">${v.sourceName} ${v.regno}</p>
+<p class="small">Promoter: ${v.promoter}${statusWord ? ` · ${statusWord}` : ""}</p>
+<p class="summary">${summary(v)}</p>
 </section>
 ${gradeCard}</div>
 <div class="col-b">${why}${clean}${unread}
 <h2 class="label head2">How the grade works</h2>
 <div class="card how"><p>Every reason is a fact from a public filing, with its date and source. We add no opinions. The rules are public and the same for every project.</p>
 <p class="small">A fact is wrong? Send the filing that shows it.</p>
-<p><a href="/rules/${esc(g?.rulesVersion ?? "v1")}">Read rule table ${esc(g?.rulesVersion ?? "v1")}</a> · <a href="${esc(v.sourceUrl)}" rel="nofollow noopener" target="_blank">Open the ${esc(v.sourceName)} page</a></p></div>
+<p><a href="/rules/${g?.rulesVersion ?? "v1"}">Read rule table ${g?.rulesVersion ?? "v1"}</a> · <a href="${v.sourceUrl}" rel="nofollow noopener" target="_blank">Open the ${v.sourceName} page</a></p></div>
 </div></div></main>
 ${followDock(v, nonce)}`;
 
@@ -438,19 +423,17 @@ const sentence = (s: string) => {
 };
 const titleCase = (s: string) => s.toLowerCase().replace(/\b[a-z]/g, (c) => c.toUpperCase());
 
-export function renderMessage(origin: string, title: string, paragraphs: string[], nonce: string, action?: string): string {
+export function renderMessage(origin: string, title: string, paragraphs: string[], nonce: string, action?: SafeHtml): SafeHtml {
   return layout(
     { title: `${title} | ${BRAND}`, description: paragraphs[0] ?? title, canonical: `${origin}/`, noindex: true },
-    `<main class="page" id="main"><section class="card msg"><h1>${esc(title)}</h1>${paragraphs.map((p) => `<p>${esc(p)}</p>`).join("")}${action ?? ""}</section></main>`,
+    html`<main class="page" id="main"><section class="card msg"><h1>${title}</h1>${paragraphs.map((p) => html`<p>${p}</p>`)}${action}</section></main>`,
     nonce,
   );
 }
 
-export function postButton(action: string, fields: Record<string, string>, label: string, primary = true): string {
-  const inputs = Object.entries(fields)
-    .map(([k, val]) => `<input type="hidden" name="${esc(k)}" value="${esc(val)}">`)
-    .join("");
-  return `<form method="post" action="${esc(action)}">${inputs}<button class="btn${primary ? " primary" : ""}" type="submit">${esc(label)}</button></form>`;
+export function postButton(action: string, fields: Record<string, string>, label: string, primary = true): SafeHtml {
+  const inputs = Object.entries(fields).map(([k, val]) => html`<input type="hidden" name="${k}" value="${val}">`);
+  return html`<form method="post" action="${action}">${inputs}<button class="btn${primary ? " primary" : ""}" type="submit">${label}</button></form>`;
 }
 
 export function renderManage(
@@ -458,20 +441,17 @@ export function renderManage(
   token: string,
   follows: { follow_id: string; state: string; slug: string; name: string }[],
   nonce: string,
-): string {
+): SafeHtml {
   const rows = follows.length
-    ? `<ul class="list manage">${follows
-        .map(
-          (f) =>
-            `<li><a href="/p/${esc(f.state)}/${esc(f.slug)}">${esc(f.name)}</a>${postButton("/follows/unfollow", { t: token, f: f.follow_id }, "Unfollow", false)}</li>`,
-        )
-        .join("")}</ul>`
-    : "<p>You do not follow any project.</p>";
+    ? html`<ul class="list manage">${follows.map(
+        (f) => html`<li><a href="/p/${f.state}/${f.slug}">${f.name}</a>${postButton("/follows/unfollow", { t: token, f: f.follow_id }, "Unfollow", false)}</li>`,
+      )}</ul>`
+    : html`<p>You do not follow any project.</p>`;
   return renderMessage(
     origin,
     "Projects you follow",
     ["Each project sends one email when its record changes and one each quarter."],
     nonce,
-    `${rows}${postButton("/follows/delete", { t: token }, "Unfollow all and delete my email", false)}`,
+    html`${rows}${postButton("/follows/delete", { t: token }, "Unfollow all and delete my email", false)}`,
   );
 }

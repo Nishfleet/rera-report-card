@@ -5,7 +5,8 @@ import type { Mailer } from "./email";
 import * as follow from "./follow";
 import { cardSvg } from "./og";
 import type { Rasterizer } from "./png";
-import { BRAND, day, esc, postButton, renderManage, renderMessage, renderProject, sortedReasons, type ProjectView } from "./render";
+import { html, type SafeHtml } from "./html";
+import { BRAND, day, postButton, renderManage, renderMessage, renderProject, sortedReasons, type ProjectView } from "./render";
 import * as store from "./store";
 import type { D1Like } from "./store";
 
@@ -24,8 +25,8 @@ function ruleInputs(version: string): Record<string, InputName> {
   return Object.fromEntries(table.rules.map((r) => [r.id, r.input]));
 }
 
-function html(body: string, nonce: string, status = 200, extra: Record<string, string> = {}): Response {
-  return new Response(body, {
+function page(body: SafeHtml, nonce: string, status = 200, extra: Record<string, string> = {}): Response {
+  return new Response(body.value, {
     status,
     headers: {
       "content-type": "text/html; charset=utf-8",
@@ -57,12 +58,12 @@ export async function handle(req: Request, env: Env, now: () => number = () => M
   const deps: follow.Deps = { db: env.DB, mailer: env.EMAIL, secret: env.SECRET, from: env.FROM_ADDRESS, origin, now };
   const path = url.pathname;
   const notFound = () =>
-    html(renderMessage(origin, "Not found", ["We do not have this page. Search for a project by name or RERA number."], nonce, '<p><a href="/">Go to search</a></p>'), nonce, 404);
+    page(renderMessage(origin, "Not found", ["We do not have this page. Search for a project by name or RERA number."], nonce, html`<p><a href="/">Go to search</a></p>`), nonce, 404);
 
   let m: RegExpExecArray | null;
 
   if (req.method === "GET" && path === "/") {
-    return html(
+    return page(
       renderMessage(origin, BRAND, ["A public report card for under-construction housing projects, graded only from filings on state RERA websites.", "Search is coming soon. Open a project link to see its grade."], nonce),
       nonce,
     );
@@ -104,7 +105,7 @@ export async function handle(req: Request, env: Env, now: () => number = () => M
       ruleInputs: ruleInputs(g?.grade.rulesVersion ?? "v1"),
       followState: f === "sent" || f === "invalid" || f === "limited" ? f : null,
     };
-    return html(renderProject(view, nonce), nonce, 200, { "cache-control": f ? "no-store" : "public, max-age=300" });
+    return page(renderProject(view, nonce), nonce, 200, { "cache-control": f ? "no-store" : "public, max-age=300" });
   }
 
   if (req.method === "GET" && (m = /^\/og\/([a-z]{2})\/([a-z0-9-]+)\.(svg|png)$/.exec(path))) {
@@ -144,47 +145,47 @@ export async function handle(req: Request, env: Env, now: () => number = () => M
   if (path === "/follow/confirm") {
     const token = req.method === "POST" ? ((await formOf(req)).get("t") ?? "") : (url.searchParams.get("t") ?? "");
     if (req.method === "GET") {
-      return html(renderMessage(origin, "Confirm your follow", ["Press the button to start following this project."], nonce, postButton("/follow/confirm", { t: token }, "Confirm and follow")), nonce, 200, { "cache-control": "no-store" });
+      return page(renderMessage(origin, "Confirm your follow", ["Press the button to start following this project."], nonce, postButton("/follow/confirm", { t: token }, "Confirm and follow")), nonce, 200, { "cache-control": "no-store" });
     }
     if (req.method === "POST") {
       const r = await follow.confirmFollow(deps, token);
       if (r.kind === "followed") {
-        return html(
-          renderMessage(origin, "You follow this project", [`We will email you when the record of ${r.project.name} changes, and once each quarter.`], nonce, `<p><a href="/p/${esc(r.project.state)}/${esc(r.project.slug)}">Back to ${esc(r.project.name)}</a> · <a href="/">Follow another project</a></p>`),
+        return page(
+          renderMessage(origin, "You follow this project", [`We will email you when the record of ${r.project.name} changes, and once each quarter.`], nonce, html`<p><a href="/p/${r.project.state}/${r.project.slug}">Back to ${r.project.name}</a> · <a href="/">Follow another project</a></p>`),
           nonce,
         );
       }
-      if (r.kind === "expired") return html(renderMessage(origin, "This link has expired", ["Follow again from the project page."], nonce), nonce, 410);
-      return html(renderMessage(origin, "This link does not work", ["It may have been used already. Follow again from the project page."], nonce), nonce, 400);
+      if (r.kind === "expired") return page(renderMessage(origin, "This link has expired", ["Follow again from the project page."], nonce), nonce, 410);
+      return page(renderMessage(origin, "This link does not work", ["It may have been used already. Follow again from the project page."], nonce), nonce, 400);
     }
   }
 
   if ((m = /^\/u\/([A-Za-z0-9_.-]+)$/.exec(path))) {
     if (req.method === "GET") {
-      return html(renderMessage(origin, "Unfollow this project", ["Press the button to stop emails about this project."], nonce, postButton(path, {}, "Unfollow")), nonce, 200, { "cache-control": "no-store" });
+      return page(renderMessage(origin, "Unfollow this project", ["Press the button to stop emails about this project."], nonce, postButton(path, {}, "Unfollow")), nonce, 200, { "cache-control": "no-store" });
     }
     if (req.method === "POST") {
       // upstream: RFC 8058 one-click unsubscribe target named in the List-Unsubscribe header. https://www.rfc-editor.org/rfc/rfc8058
       const project = await follow.unfollowByToken(deps, m[1]);
-      if (!project) return html(renderMessage(origin, "This link does not work", ["Open the newest email from us and use its link."], nonce), nonce, 400);
-      return html(renderMessage(origin, "You no longer follow this project", [`We will not email you about ${project.name} again.`], nonce), nonce);
+      if (!project) return page(renderMessage(origin, "This link does not work", ["Open the newest email from us and use its link."], nonce), nonce, 400);
+      return page(renderMessage(origin, "You no longer follow this project", [`We will not email you about ${project.name} again.`], nonce), nonce);
     }
   }
 
   if (req.method === "GET" && (m = /^\/follows\/([A-Za-z0-9_.-]+)$/.exec(path))) {
     const followerId = await follow.followerFromManageToken(deps, m[1]);
-    if (!followerId) return html(renderMessage(origin, "This link does not work", ["Open the newest email from us and use its link."], nonce), nonce, 400);
-    return html(renderManage(origin, m[1], await store.activeFollowsOf(env.DB, followerId), nonce), nonce, 200, { "cache-control": "no-store" });
+    if (!followerId) return page(renderMessage(origin, "This link does not work", ["Open the newest email from us and use its link."], nonce), nonce, 400);
+    return page(renderManage(origin, m[1], await store.activeFollowsOf(env.DB, followerId), nonce), nonce, 200, { "cache-control": "no-store" });
   }
 
   if (req.method === "POST" && (path === "/follows/unfollow" || path === "/follows/delete")) {
     const form = await formOf(req);
     const token = form.get("t") ?? "";
     const followerId = await follow.followerFromManageToken(deps, token);
-    if (!followerId) return html(renderMessage(origin, "This link does not work", ["Open the newest email from us and use its link."], nonce), nonce, 400);
+    if (!followerId) return page(renderMessage(origin, "This link does not work", ["Open the newest email from us and use its link."], nonce), nonce, 400);
     if (path === "/follows/delete") {
       await store.deleteFollower(env.DB, followerId);
-      return html(renderMessage(origin, "Your email is deleted", ["You follow no projects and we hold no email address for you."], nonce), nonce);
+      return page(renderMessage(origin, "Your email is deleted", ["You follow no projects and we hold no email address for you."], nonce), nonce);
     }
     await follow.unfollowFromManage(deps, followerId, form.get("f") ?? "");
     return redirect(`/follows/${token}`);
