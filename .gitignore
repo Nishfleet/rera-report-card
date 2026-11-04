@@ -20,3 +20,5 @@ venv/
 !.env.example
 coverage/
 .wrangler/
+.cloudflare/
+.dev.vars
