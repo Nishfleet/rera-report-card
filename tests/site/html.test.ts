@@ -1,5 +1,5 @@
-import { describe, expect, it } from "vitest";
-import { html, raw } from "../../src/site/html";
+import { describe, expect, expectTypeOf, it } from "vitest";
+import { html, raw, type SafeHtml } from "../../src/site/html";
 
 describe("html tag", () => {
   it("escapes every interpolated string and number", () => {
@@ -19,5 +19,10 @@ describe("html tag", () => {
 
   it("passes raw markup through unchanged", () => {
     expect(html`<style>${raw("a>b{}")}</style>`.value).toBe("<style>a>b{}</style>");
+  });
+
+  it("rejects a spread copy with swapped markup as SafeHtml", () => {
+    const forged = { ...html`<b>${"<x>"}</b>`, value: "<script>alert(1)</script>" };
+    expectTypeOf(forged).not.toExtend<SafeHtml>();
   });
 });

@@ -1,19 +1,19 @@
-declare const safe: unique symbol;
-
-export interface SafeHtml {
-  readonly [safe]: true;
-  readonly value: string;
-  toString(): string;
-}
-
-type Interpolation = SafeHtml | string | number | boolean | null | undefined | readonly Interpolation[];
-
-class Html {
-  constructor(readonly value: string) {}
+class SafeHtml {
+  readonly #value: string;
+  constructor(value: string) {
+    this.#value = value;
+  }
+  get value(): string {
+    return this.#value;
+  }
   toString(): string {
-    return this.value;
+    return this.#value;
   }
 }
+
+export type { SafeHtml };
+
+type Interpolation = SafeHtml | string | number | boolean | null | undefined | readonly Interpolation[];
 
 export function esc(value: unknown): string {
   return String(value ?? "")
@@ -25,11 +25,11 @@ export function esc(value: unknown): string {
 }
 
 export function raw(value: string): SafeHtml {
-  return new Html(value) as unknown as SafeHtml;
+  return new SafeHtml(value);
 }
 
 function part(value: Interpolation): string {
-  if (value instanceof Html) return value.value;
+  if (value instanceof SafeHtml) return value.value;
   if (Array.isArray(value)) return value.map(part).join("");
   if (value === null || value === undefined || value === false) return "";
   return esc(value);
