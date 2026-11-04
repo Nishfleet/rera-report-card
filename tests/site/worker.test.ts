@@ -333,3 +333,21 @@ describe("store helpers", () => {
     expect(() => memoryD1()).not.toThrow();
   });
 });
+
+describe("health route", () => {
+  it("answers ok after one database read", async () => {
+    const { call } = setup();
+    const res = await call("/api/health");
+    expect(res.status).toBe(200);
+    expect(res.headers.get("cache-control")).toBe("no-store");
+    expect(await res.json()).toEqual({ status: "ok", db: "connected" });
+  });
+
+  it("answers 503 when the database read fails", async () => {
+    const e = env();
+    e.DB.raw.close();
+    const res = await handle(new Request(`${ORIGIN}/api/health`), e);
+    expect(res.status).toBe(503);
+    expect(await res.json()).toEqual({ status: "error", db: "error" });
+  });
+});

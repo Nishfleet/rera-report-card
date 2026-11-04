@@ -68,6 +68,19 @@ export async function handle(req: Request, env: Env, now: () => number = () => M
     );
   }
 
+  if (req.method === "GET" && path === "/api/health") {
+    let ok: boolean;
+    try {
+      ok = Boolean(await env.DB.prepare("SELECT 1 AS ok").bind().first());
+    } catch {
+      ok = false;
+    }
+    return new Response(JSON.stringify(ok ? { status: "ok", db: "connected" } : { status: "error", db: "error" }), {
+      status: ok ? 200 : 503,
+      headers: { "content-type": "application/json; charset=utf-8", "cache-control": "no-store" },
+    });
+  }
+
   if (req.method === "GET" && (m = /^\/p\/([a-z]{2})\/([a-z0-9-]+)$/.exec(path))) {
     const project = await store.projectBySlug(env.DB, m[1], m[2]);
     if (!project) return notFound();
