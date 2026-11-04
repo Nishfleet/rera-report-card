@@ -1,4 +1,4 @@
-import { describe, expect, expectTypeOf, it } from "vitest";
+import { describe, expect, it } from "vitest";
 import { html, raw, type SafeHtml } from "../../src/site/html";
 
 describe("html tag", () => {
@@ -22,7 +22,8 @@ describe("html tag", () => {
   });
 
   it("rejects a spread copy with swapped markup as SafeHtml", () => {
-    const forged = { ...html`<b>${"<x>"}</b>`, value: "<script>alert(1)</script>" };
-    expectTypeOf(forged).not.toExtend<SafeHtml>();
+    // @ts-expect-error a spread copy has no private #value, so it is not SafeHtml
+    const forged: SafeHtml = { ...html`<b>${"<x>"}</b>`, value: "<script>alert(1)</script>" };
+    expect(html`${forged}`.value).not.toContain("<script>");
   });
 });
