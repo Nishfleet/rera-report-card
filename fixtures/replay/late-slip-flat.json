@@ -1,0 +1,155 @@
+{
+  "name": "Late reports, short slip, flat progress, 3 complaints (invented)",
+  "asOf": "2026-10-13",
+  "filings": [
+    {
+      "id": "ls-reg1",
+      "type": "registration",
+      "date": "2024-01-10",
+      "sourceUrl": "https://example.test/sample/ls-reg1",
+      "payload": {
+        "status": "active",
+        "validUntil": "2028-12-31"
+      }
+    },
+    {
+      "id": "ls-q1",
+      "type": "qpr",
+      "date": "2026-02-10",
+      "sourceUrl": "https://example.test/sample/ls-q1",
+      "payload": {
+        "deadline": "2026-01-31",
+        "filedOn": "2026-02-10",
+        "noticeIssued": false
+      }
+    },
+    {
+      "id": "ls-q2",
+      "type": "qpr",
+      "date": "2026-04-20",
+      "sourceUrl": "https://example.test/sample/ls-q2",
+      "payload": {
+        "deadline": "2026-04-30",
+        "filedOn": "2026-04-20",
+        "noticeIssued": false
+      }
+    },
+    {
+      "id": "ls-q3",
+      "type": "qpr",
+      "date": "2026-07-25",
+      "sourceUrl": "https://example.test/sample/ls-q3",
+      "payload": {
+        "deadline": "2026-07-31",
+        "filedOn": "2026-07-25",
+        "noticeIssued": false
+      }
+    },
+    {
+      "id": "ls-cd1",
+      "type": "completion_date",
+      "date": "2026-02-01",
+      "sourceUrl": "https://example.test/sample/ls-cd1",
+      "payload": {
+        "originalDate": "2027-03-31",
+        "currentDate": "2027-06-30"
+      }
+    },
+    {
+      "id": "ls-p1",
+      "type": "progress",
+      "date": "2026-04-20",
+      "sourceUrl": "https://example.test/sample/ls-p1",
+      "payload": {
+        "percent": 40
+      }
+    },
+    {
+      "id": "ls-p2",
+      "type": "progress",
+      "date": "2026-07-25",
+      "sourceUrl": "https://example.test/sample/ls-p2",
+      "payload": {
+        "percent": 40
+      }
+    },
+    {
+      "id": "ls-c1",
+      "type": "complaint",
+      "date": "2025-12-01",
+      "sourceUrl": "https://example.test/sample/ls-c1",
+      "payload": {}
+    },
+    {
+      "id": "ls-c2",
+      "type": "complaint",
+      "date": "2026-03-01",
+      "sourceUrl": "https://example.test/sample/ls-c2",
+      "payload": {}
+    },
+    {
+      "id": "ls-c3",
+      "type": "complaint",
+      "date": "2026-06-01",
+      "sourceUrl": "https://example.test/sample/ls-c3",
+      "payload": {}
+    }
+  ],
+  "stored": {
+    "rulesVersion": "v1",
+    "asOf": "2026-10-13",
+    "letter": "B",
+    "points": 85,
+    "reasons": [
+      {
+        "ruleId": "R3",
+        "points": 3,
+        "impact": "Low",
+        "title": "Quarterly report filed late",
+        "detail": "A quarterly report was filed after its deadline.",
+        "filingId": "ls-q1",
+        "filingDate": "2026-02-10",
+        "sourceUrl": "https://example.test/sample/ls-q1"
+      },
+      {
+        "ruleId": "R4",
+        "points": 3,
+        "impact": "Low",
+        "title": "Completion date moved",
+        "detail": "The completion date moved 1 to 6 months later than first filed.",
+        "filingId": "ls-cd1",
+        "filingDate": "2026-02-01",
+        "sourceUrl": "https://example.test/sample/ls-cd1"
+      },
+      {
+        "ruleId": "R10",
+        "points": 5,
+        "impact": "Medium",
+        "title": "Complaints filed",
+        "detail": "3 to 5 complaints were filed against the project in the last 24 months.",
+        "filingId": "ls-c3",
+        "filingDate": "2026-06-01",
+        "sourceUrl": "https://example.test/sample/ls-c3"
+      },
+      {
+        "ruleId": "R13",
+        "points": 4,
+        "impact": "Low",
+        "title": "No progress reported",
+        "detail": "Reported percent complete did not rise between the last two filed reports.",
+        "filingId": "ls-p2",
+        "filingDate": "2026-07-25",
+        "sourceUrl": "https://example.test/sample/ls-p2"
+      }
+    ],
+    "unread": [
+      {
+        "input": "extensions",
+        "reason": "source not read"
+      }
+    ],
+    "clean": [
+      "registration"
+    ]
+  }
+}
