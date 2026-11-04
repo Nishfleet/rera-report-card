@@ -31,7 +31,7 @@ jobs:
       - run: npm ci
       - name: Record the serving Worker version, the rollback target
         run: |
-          target=$(npx wrangler@4.155.0 deployments status --json | jq -r '[.versions[] | select(.percentage == 100) | .version_id][0]')
+          target=$(npx wrangler deployments status --json | jq -r '[.versions[] | select(.percentage == 100) | .version_id][0]')
           if [ -z "$target" ] || [ "$target" = "null" ]; then
             echo "::error::Could not read the serving Worker version id. Refusing to deploy with no rollback target." >&2
             exit 1
@@ -47,7 +47,6 @@ jobs:
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          wranglerVersion: "4.155.0"
           command: deploy
           secrets: |
             SECRET
@@ -59,5 +58,5 @@ jobs:
         run: curl -fsS -o /dev/null --retry 10 --retry-all-errors --retry-delay 6 https://rera-report-card.nishant345.workers.dev
       - name: Roll back to the serving Worker version
         if: always() && steps.deploy.outcome == 'success' && steps.smoke.outcome != 'success'
-        run: npx wrangler@4.155.0 rollback "$ROLLBACK_TARGET" --yes --message "smoke failed $GITHUB_SHA"
+        run: npx wrangler rollback "$ROLLBACK_TARGET" --yes --message "smoke failed $GITHUB_SHA"
         env: *cloudflare
