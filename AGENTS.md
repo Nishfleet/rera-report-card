@@ -2,7 +2,7 @@
 
 Launch stage: 0 (day one). Next trigger: the follow-by-email page goes public and stores its first follower's address (stage 1).
 
-Success: confirmed followers, people who finished the double opt-in and still follow at least one project (PLAN.md section 12 targets 2,000 within 90 days of public launch). Baseline: 0 on 2026-10-15. The Worker deploys on every merge to main since 2026-11-03, and the follow page is not public yet. Measured by: `npx wrangler d1 execute rera-report-card --remote --command "SELECT COUNT(DISTINCT follower) FROM follow WHERE state = 'active'"` (read-only, once deployed).
+Success: confirmed followers, people who finished the double opt-in and still follow at least one project (PLAN.md section 12 targets 2,000 within 90 days of public launch). Baseline: 0 on 2026-10-15. The Worker deploys on every merge to main since 2026-11-03, and the follow page is not public yet. Measured by: `npx cf d1 query 1dc0ddec-8c0a-4a96-bf7e-29672a53516a --sql "SELECT COUNT(DISTINCT follower) FROM follow WHERE state = 'active'"` (read-only, once deployed).
 
 ## Run it and prove it
 

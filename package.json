@@ -4,6 +4,8 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "db:local": "cf d1 raw 1dc0ddec-8c0a-4a96-bf7e-29672a53516a --local --persist-to .wrangler/state --sql=\"$(cat db/schema.sql)\"",
+    "dev": "cf dev",
     "lint": "eslint src tests",
     "test": "tsc -p . && vitest run",
     "test:coverage": "vitest run --coverage",
@@ -13,6 +15,7 @@
     "@eslint/js": "^10.0.1",
     "@types/node": "^26.6.6",
     "@vitest/coverage-v8": "^5.0.5",
+    "cf": "1.0.0-beta.27",
     "eslint": "^10.14.0",
     "eslint-plugin-no-comments": "^1.2.1",
     "globals": "^17.12.0",
