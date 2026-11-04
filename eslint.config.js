@@ -54,7 +54,7 @@ export default tseslint.config(
       ],
       "no-restricted-properties": [
         "error",
-        { object: "globalThis", property: "fetch", message: "Outbound requests go through src/states/hr/fetcher.ts, which owns the timeout, retries and user agent." },
+        { property: "fetch",message: "Outbound requests go through src/states/hr/fetcher.ts, which owns the timeout, retries and user agent." },
       ],
     },
   },
