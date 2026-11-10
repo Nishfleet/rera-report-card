@@ -10,6 +10,6 @@ Status: early build. Run `npm test`. Run the site locally with `npm run db:local
 
 - `src/grade.ts` and `rules/`: the grader and the versioned rule table.
 - `src/states/hr/`: the Haryana RERA fetcher and parsers, tested on `tests/fixtures/hr/`.
-- `src/site/`: the public site as a Cloudflare Worker. Project page `/p/:state/:slug`, preview card, follow by email with double opt-in, one-click unfollow and a manage page. Schema in `db/schema.sql`, config in `cloudflare.config.ts`. `wrangler.toml` stays until the deploy and preview workflows run on cf, because Wrangler does not read `cloudflare.config.ts`; change both files together.
+- `src/site/`: the public site as a Cloudflare Worker. Project page `/p/:state/:slug`, preview card, follow by email with double opt-in, one-click unfollow and a manage page. Schema in `db/schema.sql`, Worker config in `cloudflare.config.ts`, and the Vite plugin that `cf build` and `cf dev` use in `vite.config.ts`.
 
-Every merge to `main` deploys the site with `.github/workflows/deploy.yml`, and every pull request gets its own preview copy from the `preview` check (link pattern in the pull request template). Email sending still needs the sending domain onboarded to Cloudflare Email Service and the two `REPLACE_WITH_DOMAIN` values in `wrangler.toml` and `cloudflare.config.ts` filled in.
+Every merge to `main` deploys the site with `.github/workflows/deploy.yml` using the `cf` CLI, and every pull request gets its own preview copy from the `preview` check (link pattern in the pull request template). Email sending still needs the sending domain onboarded to Cloudflare Email Service and the two `REPLACE_WITH_DOMAIN` values in `cloudflare.config.ts` filled in.

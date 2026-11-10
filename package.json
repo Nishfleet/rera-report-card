@@ -4,14 +4,16 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "db:local": "cf d1 raw 1dc0ddec-8c0a-4a96-bf7e-29672a53516a --local --persist-to .wrangler/state --sql=\"$(cat db/schema.sql)\"",
+    "db:local": "cf d1 raw 1dc0ddec-8c0a-4a96-bf7e-29672a53516a --local --persist-to .cloudflare/state --sql=\"$(cat db/schema.sql)\"",
     "dev": "cf dev",
+    "build": "cf build",
     "lint": "eslint src tests",
     "test": "tsc -p . && vitest run",
     "test:coverage": "vitest run --coverage",
     "typecheck": "tsc -p ."
   },
   "devDependencies": {
+    "@cloudflare/vite-plugin": "^2.0.0-beta.v.14",
     "@eslint/js": "^10.0.1",
     "@types/node": "^26.6.6",
     "@vitest/coverage-v8": "^5.0.5",
@@ -21,8 +23,7 @@
     "globals": "^17.12.0",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.72.1",
-    "vitest": "^5.0.5",
-    "wrangler": "4.155.0"
+    "vitest": "^5.0.5"
   },
   "dependencies": {
     "@expo-google-fonts/inter": "^0.4.2",
