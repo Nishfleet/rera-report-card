@@ -26,4 +26,4 @@ Preconditions:
 ## Gotchas
 
 - If PNG drawing throws, the Worker falls back to SVG with `cache-control: no-store` under the `.png` URL. Check the content type, not only the 200.
-- The fonts bundle through the `.ttf` Data rule in `wrangler.config.ts`. A build that drops that rule breaks this route.
+- The fonts bundle through the `.ttf` Data rule in `cloudflare.config.ts`. A build that drops that rule breaks this route.

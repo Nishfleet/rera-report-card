@@ -15,16 +15,16 @@ RUN_ID=$(date +%Y%m%d-%H%M%S)
 EVIDENCE=${TMPDIR:-/tmp}/verify-rera-$RUN_ID
 DB_ID=1dc0ddec-8c0a-4a96-bf7e-29672a53516a
 B=http://localhost:$PORT
-q() { npx cf d1 raw "$DB_ID" --local --persist-to .wrangler/state --sql "$1"; }
+q() { npx cf d1 raw "$DB_ID" --local --persist-to .cloudflare/state --sql "$1"; }
 mkdir -p "$EVIDENCE"
 ```
 
-`q` reads the same local D1 file that `cf dev` uses, because the Wrangler bundler keeps dev data in `.wrangler/state` and `cf d1 raw --local` reads `<persist-to>/v3`. Without `--persist-to`, `cf` writes to a shared directory in your home folder that the dev server never reads.
+`q` reads the same local D1 file that `cf dev` uses: the Cloudflare Vite plugin, which `cf dev` delegates to, persists dev data under `.cloudflare/state` (the path set in `vite.config.ts`) and `cf d1 raw --local` reads `<persist-to>/v3`. Without `--persist-to`, `cf` writes to a shared directory in your home folder that the dev server never reads.
 
 ## Launch
 
 1. `npm ci` once.
-2. Start from an empty database: `rm -rf .wrangler/state`, then `npm run db:local`. It prints `"success": true`.
+2. Start from an empty database: `rm -rf .cloudflare/state`, then `npm run db:local`. It prints `"success": true`.
 3. Seed one Haryana project through the real parser. The fixture is `tests/fixtures/hr/detail-1129.html`, and its slug is `277-of-2017`:
 
    ```sh
@@ -55,12 +55,12 @@ mkdir -p "$EVIDENCE"
 
    ```sh
    setsid -f sh -c 'echo $$ > "$1/dev.pid"; exec npx cf dev --port "$2" > "$1/dev.log" 2>&1' sh "$EVIDENCE" "$PORT"
-   until grep -qs "Ready on" "$EVIDENCE/dev.log"; do sleep 1; done
+   until grep -qs "http://localhost:$PORT" "$EVIDENCE/dev.log"; do sleep 1; done
    ```
 
    Do not use `setsid npx ... & echo $!`. `setsid` forks when its caller leads a process group, so `$!` names a process that has already exited, and cleanup misses the server.
 
-   Ready means the log says `Ready on http://localhost:$PORT` and the binding table lists `env.SECRET` and `env.PUBLIC_ORIGIN` as `(hidden)`. A `Missing required secrets: SECRET` warning means step 4 did not run, and every follow request will fail.
+   Ready means the log prints `Local:   http://localhost:$PORT` (the Vite dev server's ready line) and `curl -s "$B/api/health"` returns 200. If `/api/health` is not 200, run the Doctor below; a follow request that always errors usually means `.dev.vars` (step 4, the `SECRET`) is missing.
 
 ## Doctor
 
@@ -74,7 +74,7 @@ q "SELECT slug FROM project"
 
 Healthy: the port belongs to a `workerd` started from this checkout, health prints `{"status":"ok","db":"connected"}` with 200, and the query returns `277-of-2017`. Health only runs `SELECT 1`, so it passes on an empty database. The project query proves the seed.
 
-Isolation: one instance per checkout, because every instance in a checkout shares `.wrangler/state`. If the port is taken by a process you did not start, pick another `PORT`. Never drive or kill it.
+Isolation: one instance per checkout, because every instance in a checkout shares `.cloudflare/state`. If the port is taken by a process you did not start, pick another `PORT`. Never drive or kill it.
 
 ## Drive
 
@@ -90,14 +90,14 @@ Everything goes to `$EVIDENCE`: `dev.log`, response bodies, `card.png`, and the 
 
 - Use the real user path: the form POSTs and the links in the email the Worker sent. Never insert `follow` or `follower` rows by hand.
 - Capture the action and the result: the HTTP code, the page `<h1>`, and the row state read back with `q`.
-- The email is a real side effect. Local `send_email` writes each message under `.wrangler/tmp/email/`, and `dev.log` prints its path on a `Text:` line. Copy the file into `$EVIDENCE`.
+- The email is a real side effect. Local `send_email` writes each message under `.cloudflare/tmp/email/`, and `dev.log` prints its path on a `Text:` line. Copy the file into `$EVIDENCE`.
 - The links in the email carry signed tokens. Keep them out of PR text and public comments.
 
 ## Cleanup
 
 ```sh
 kill -- -"$(cat "$EVIDENCE/dev.pid")"
-rm -rf .wrangler/state .wrangler/tmp .dev.vars
+rm -rf .cloudflare/state .cloudflare/tmp .dev.vars
 ```
 
 This stops only the process group you started. It never kills by name. `$EVIDENCE` stays. Check it with `ls "$EVIDENCE"` after cleanup.
