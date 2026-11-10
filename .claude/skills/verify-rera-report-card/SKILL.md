@@ -60,7 +60,7 @@ mkdir -p "$EVIDENCE"
 
    Do not use `setsid npx ... & echo $!`. `setsid` forks when its caller leads a process group, so `$!` names a process that has already exited, and cleanup misses the server.
 
-   Ready means the log prints `Local:   http://localhost:$PORT` (the Vite dev server's ready line) and `curl -s "$B/api/health"` returns 200. If `​/api/health` is not 200, run the Doctor below; a follow request that always errors usually means `.dev.vars` (step 4, the `SECRET`) is missing.
+   Ready means the log prints `Local:   http://localhost:$PORT` (the Vite dev server's ready line) and `curl -s "$B/api/health"` returns 200. If `/api/health` is not 200, run the Doctor below; a follow request that always errors usually means `.dev.vars` (step 4, the `SECRET`) is missing.
 
 ## Doctor
 
