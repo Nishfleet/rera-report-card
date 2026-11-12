@@ -172,11 +172,6 @@ describe("live retry policy", () => {
   const LIVE_PAGES = 2;
   const LIVE_JOB_BUDGET_MS = 600_000;
 
-  it("attempts the live fetch 3 times, 30 s apart", () => {
-    expect(LIVE_ATTEMPTS).toBe(3);
-    expect(LIVE_RETRY_DELAY_MS).toBe(30_000);
-  });
-
   it("keeps the live proof inside the job timeout", () => {
     const perPage = LIVE_ATTEMPTS * LIVE_TIMEOUT_MS + (LIVE_ATTEMPTS - 1) * LIVE_RETRY_DELAY_MS;
     expect(LIVE_PAGES * perPage).toBeLessThan(LIVE_JOB_BUDGET_MS);

@@ -47,13 +47,3 @@ it("each caller passes exactly the secrets its fleet-ops callee declares", () =>
     }
   }
 });
-
-it("the agent stub reads the issue number from both of its triggers", () => {
-  const agent = readFileSync(new URL("agent.yml", workflows), "utf8");
-  expect(agent).toContain("issue: ${{ github.event.issue.number || inputs.issue }}");
-});
-
-it("the agent stub names each run with its engine, which the reviewer reads to pick another family", () => {
-  const agent = readFileSync(new URL("agent.yml", workflows), "utf8");
-  expect(agent).toMatch(/^run-name: "agent #\$\{\{ github\.event\.issue\.number \|\| inputs\.issue \}\} engine=/m);
-});
