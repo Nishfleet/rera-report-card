@@ -7,7 +7,7 @@ description: Drive the RERA Report Card Worker locally with cf dev and a local D
 
 The surface is HTTP: server-rendered pages and form POSTs from one Cloudflare Worker (`src/site/entry.ts`). Drive it with `curl`. Local D1 and the email binding run inside `cf dev`, so no Cloudflare login is needed. Feature recipes live in [features/README.md](features/README.md).
 
-Run every command from the repo root. Set these once per run:
+Run every command from the repo root. Set these once per run (the `q` helper needs `jq`):
 
 ```sh
 PORT=8792
@@ -15,11 +15,11 @@ RUN_ID=$(date +%Y%m%d-%H%M%S)
 EVIDENCE=${TMPDIR:-/tmp}/verify-rera-$RUN_ID
 DB_ID=1dc0ddec-8c0a-4a96-bf7e-29672a53516a
 B=http://localhost:$PORT
-q() { npx cf d1 raw "$DB_ID" --local --persist-to .wrangler/state --sql "$1"; }
+q() { npx cf d1 raw "$DB_ID" --local --persist-to .wrangler/state --sql "$1" | jq -r '.[].results.rows[] | join(", ")'; }
 mkdir -p "$EVIDENCE"
 ```
 
-`q` reads the same local D1 file that `cf dev` uses, because the Wrangler bundler keeps dev data in `.wrangler/state` and `cf d1 raw --local` reads `<persist-to>/v3`. Without `--persist-to`, `cf` writes to a shared directory in your home folder that the dev server never reads.
+`q` reads the same local D1 file that `cf dev` uses, because the Wrangler bundler keeps dev data in `.wrangler/state` and `cf d1 raw --local` reads `<persist-to>/v3`. Without `--persist-to`, `cf` writes to a shared directory in your home folder that the dev server never reads. `cf d1 raw` prints JSON; `q` pipes it through `jq` so each row prints as comma-separated values, which is what the result examples below name.
 
 ## Launch
 
