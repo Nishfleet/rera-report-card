@@ -61,11 +61,6 @@ export default tseslint.config(
           message:
             "Assert the behavior a constant configures, not the constant's own value. A test that restates a constant fails when only the internals change (#100).",
         },
-        {
-          selector: "Literal[value=/\\.github\\/workflows/]",
-          message:
-            "Workflow contract checks live in scripts/check-workflows.mjs, which npm run lint runs. A test that regexes workflow text proves only its own regex (#102, #105).",
-        },
       ],
     },
   },

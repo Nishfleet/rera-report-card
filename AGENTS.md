@@ -19,6 +19,6 @@ Live: <https://rera-report-card.nishant345.workers.dev>, the workers.dev address
 | No comments except `upstream:`, `eslint` and `@ts-expect-error` | `npm run lint` (`no-comments`) |
 | Outbound requests go only through `src/states/hr/fetcher.ts` | `npm run lint` (`no-restricted-globals`, `no-restricted-properties`) |
 | A test asserts behavior, not a constant's own value, source text or workflow text | `npm run lint` (test selectors) |
-| A fleet-ops caller pins `@main`, names its secrets and keeps the run-name engine | `scripts/check-workflows.mjs`, run by `npm run lint` |
+| A fleet-ops caller pins `@main`, names its secrets and keeps the run-name engine | `npm test` (`tests/fleet-lane-callers.test.ts`) |
 | Every rule moves at least one replay fixture | `npm test` (`tests/grade-fixtures.test.ts`) |
 | The public routes work as the feature map says | live pass in `.claude/skills/verify-rera-report-card/` |

@@ -6,7 +6,7 @@
   "scripts": {
     "db:local": "cf d1 raw 1dc0ddec-8c0a-4a96-bf7e-29672a53516a --local --persist-to .wrangler/state --sql=\"$(cat db/schema.sql)\"",
     "dev": "cf dev",
-    "lint": "eslint src tests && node scripts/check-workflows.mjs",
+    "lint": "eslint src tests",
     "test": "tsc -p . && vitest run",
     "test:coverage": "vitest run --coverage",
     "typecheck": "tsc -p ."
