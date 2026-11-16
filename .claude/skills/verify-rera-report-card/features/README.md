@@ -25,7 +25,7 @@ This directory is the maintained source for verifying what a buyer can do on RER
 
 | Feature | File | Entry points |
 | --- | --- | --- |
-| Project page | [project-page.md](project-page.md) | `/`, `/api/health`, `/p/:state/:slug` |
+| Project page | [project-page.md](project-page.md) | `/`, `/api/health`, `/p/:state/:slug`, `/rules/:version` |
 | Preview card | [og-card.md](og-card.md) | `/og/:state/:slug.png`, `.svg` |
 | Follow by email | [follow-email.md](follow-email.md) | `POST /api/follow`, `/follow/confirm`, `/u/:token`, `/follows/:token`, `/follows/unfollow`, `/follows/delete` |
 

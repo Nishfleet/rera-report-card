@@ -45,6 +45,32 @@ export default tseslint.config(
   },
 
   {
+    files: ["tests/**/*.test.ts"],
+    rules: {
+      "no-restricted-syntax": [
+        "error",
+        {
+          selector:
+            "CallExpression > MemberExpression > CallExpression[callee.name='expect'] > Identifier[name=/^[A-Z][A-Z0-9_]*$/].arguments",
+          message:
+            "Assert the behavior a constant configures, not the constant's own value. A test that restates a constant fails when only the internals change (#100).",
+        },
+        {
+          selector:
+            "CallExpression > MemberExpression > MemberExpression > CallExpression[callee.name='expect'] > Identifier[name=/^[A-Z][A-Z0-9_]*$/].arguments",
+          message:
+            "Assert the behavior a constant configures, not the constant's own value. A test that restates a constant fails when only the internals change (#100).",
+        },
+        {
+          selector: "Literal[value=/\\.github\\/workflows/]",
+          message:
+            "Workflow contract checks live in scripts/check-workflows.mjs, which npm run lint runs. A test that regexes workflow text proves only its own regex (#102, #105).",
+        },
+      ],
+    },
+  },
+
+  {
     files: ["src/**/*.ts"],
     ignores: ["src/states/hr/fetcher.ts"],
     rules: {

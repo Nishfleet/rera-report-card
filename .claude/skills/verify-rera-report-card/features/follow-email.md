@@ -8,6 +8,7 @@ A buyer enters an email address on a project page to follow it. The Worker sends
 - `follow-confirm` turns pending into active through the emailed link, once.
 - `unfollow` sets the follow to unfollowed through the one-click link.
 - `manage` lists active follows for the address.
+- `manage-unfollow` sets one listed follow to unfollowed from the manage page.
 - `delete` removes the follower and every follow.
 
 ## How to get to it (user POV)
@@ -15,7 +16,7 @@ A buyer enters an email address on a project page to follow it. The Worker sends
 - The follow form on `/p/hr/<slug>` (fields `state`, `slug`, `email`, and the hidden honeypot `website`).
 - The confirm link in the email, `/follow/confirm?t=<token>`. GET shows a button that POSTs `t`.
 - The unfollow link in the email, `/u/<token>`. GET shows a button that POSTs.
-- The manage link in the email, `/follows/<token>`. Its delete form POSTs `t` to `/follows/delete`.
+- The manage link in the email, `/follows/<token>`. Its Unfollow form POSTs `t` and `f` to `/follows/unfollow`, and its delete form POSTs `t` to `/follows/delete`.
 
 ## Driving it with curl
 
@@ -28,6 +29,7 @@ Preconditions:
 - **Read the email.** Run `until T=$(grep '^Text: ' "$EVIDENCE/dev.log" | tail -1 | cut -c7-) && [ -s "$T" ]; do sleep 1; done; cp "$T" "$EVIDENCE/confirm-email.txt"`. The file holds the `/follow/confirm?t=`, `/u/` and `/follows/` links, all on `$B`.
 - **Confirm.** Run `C=$(grep -o "$B/follow/confirm?t=[^ ]*" "$T" | head -1)`, then `curl -s -o /dev/null -w '%{http_code}\n' "$C"` (200), then `curl -s -X POST --data-urlencode "t=${C#*t=}" "$B/follow/confirm" | grep -o '<h1>[^<]*'`. Result: `You follow this project`. `q "SELECT state FROM follow"` returns `active`. Posting the same token again returns `400`.
 - **Manage.** Run `M=$(grep -o "$B/follows/[^ ]*" "$T" | head -1); curl -s -o /dev/null -w '%{http_code}\n' "$M"`. Result: `200`.
+- **Unfollow from the manage page.** Run `F=$(curl -s "$M" | grep -o 'name="f" value="[^"]*"' | head -1 | cut -d'"' -f4)`, then `curl -s -o /dev/null -w '%{http_code} %{redirect_url}\n' -X POST --data-urlencode "t=${M##*/}" --data-urlencode "f=$F" "$B/follows/unfollow"`. Result: `303` to `/follows/<token>`, and `q "SELECT state FROM follow"` returns `unfollowed`.
 - **Unfollow.** Run `U=$(grep -o "$B/u/[^ ]*" "$T" | head -1); curl -s -X POST "$U" | grep -o '<h1>[^<]*'`. Result: `You no longer follow this project`, and `q "SELECT state FROM follow"` returns `unfollowed`.
 - **Delete.** Run `curl -s -X POST --data-urlencode "t=${M##*/}" "$B/follows/delete" | grep -o '<h1>[^<]*'`. Result: `Your email is deleted`, and `q "SELECT (SELECT COUNT(*) FROM follower), (SELECT COUNT(*) FROM follow)"` returns `0, 0`.
 

@@ -11,3 +11,14 @@ Live: <https://rera-report-card.nishant345.workers.dev>, the workers.dev address
 - Run: `npm run typecheck`, `npm run lint` and `npm test`.
 - Prove: after the deploy on main, `curl -s https://rera-report-card.nishant345.workers.dev/api/health` prints `{"status":"ok","db":"connected"}` with status 200. A 503 with `{"status":"error","db":"error"}` means the D1 read failed, so the database binding is broken.
 - Test login: none, because the site has no accounts.
+
+## Rules and what enforces them
+
+| Rule | Enforced by |
+| --- | --- |
+| No comments except `upstream:`, `eslint` and `@ts-expect-error` | `npm run lint` (`no-comments`) |
+| Outbound requests go only through `src/states/hr/fetcher.ts` | `npm run lint` (`no-restricted-globals`, `no-restricted-properties`) |
+| A test asserts behavior, not a constant's own value, source text or workflow text | `npm run lint` (test selectors) |
+| A fleet-ops caller pins `@main`, names its secrets and keeps the run-name engine | `scripts/check-workflows.mjs`, run by `npm run lint` |
+| Every rule moves at least one replay fixture | `npm test` (`tests/grade-fixtures.test.ts`) |
+| The public routes work as the feature map says | live pass in `.claude/skills/verify-rera-report-card/` |
